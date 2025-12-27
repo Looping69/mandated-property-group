@@ -1,0 +1,8 @@
+{
+  "name": "Mandated Property Group",
+  "description": "A premier real estate platform for elite listings, top-tier agent showcases, and AI-powered virtual tour generation.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
