@@ -35,3 +35,9 @@ The backend is built with [Encore.dev](https://encore.dev).
 The backend includes:
 - **Neon Database**: Automatically provisioned Postgres database for listings and agents.
 - **Storage Bucket**: For storing property media and tour assets.
+
+## Features
+
+- **Agent Dashboard**: Dedicated portal for agents to manage listings and inquiries.
+- **Maintenance Dashboard**: Tool for contractors to track and update maintenance requests.
+- **Contractor Registration**: Streamlined onboarding for service providers.
