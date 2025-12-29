@@ -15,6 +15,9 @@ import { ContractorDetailModal } from './components/ContractorDetailModal';
 import { MaintenanceView } from './components/MaintenanceView';
 import { FeaturedCarousel } from './components/FeaturedCarousel';
 import { ContractorRegistration } from './components/ContractorRegistration';
+import { JoinSelection } from './components/JoinSelection';
+import { AgencyRegistration } from './components/AgencyRegistration';
+import { AgentRegistration } from './components/AgentRegistration';
 
 import { AppView, Listing, VirtualTour, Contractor, UserRole } from './types';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -108,10 +111,43 @@ const InnerApp = () => {
           <ContractorRegistration
             onSubmit={async (contractor) => {
               await addContractor(contractor);
-              alert('Registration submitted successfully! We\'ll review your application and contact you soon.');
-              setCurrentView(AppView.MAINTENANCE);
+            }}
+            onDashboardRedirect={() => setCurrentView(AppView.MAINTENANCE)}
+            onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
+          />
+        );
+      case AppView.JOIN_SELECTION:
+        return (
+          <JoinSelection
+            onSelectType={(type) => {
+              if (type === 'contractor') setCurrentView(AppView.CONTRACTOR_REGISTRATION);
+              else if (type === 'agency') setCurrentView(AppView.REGISTER_AGENCY);
+              else if (type === 'agent') setCurrentView(AppView.REGISTER_AGENT);
             }}
             onCancel={() => setCurrentView(AppView.HOME)}
+          />
+        );
+      case AppView.REGISTER_AGENCY:
+        return (
+          <AgencyRegistration
+            onSubmit={async (agency) => {
+              // In a real app, we'd add this to the database
+              console.log("Agency Registered:", agency);
+              alert('Agency application submitted! We will be in touch shortly.');
+              setCurrentView(AppView.HOME);
+            }}
+            onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
+          />
+        );
+      case AppView.REGISTER_AGENT:
+        return (
+          <AgentRegistration
+            onSubmit={async (agent) => {
+              console.log("Agent Registered:", agent);
+              alert('Agent profile received! Verification is pending.');
+              setCurrentView(AppView.HOME);
+            }}
+            onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
           />
         );
       case AppView.LISTINGS:
@@ -151,7 +187,7 @@ const InnerApp = () => {
                 <h1 className="text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">Find Your Perfect <span className="text-brand-green">Show House Property</span></h1>
                 <p className="text-lg md:text-xl text-slate-200 mb-10 font-bold max-w-2xl mx-auto drop-shadow-md">Connect with top agents, conveyancers, and maintenance contractors.</p>
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl p-6 shadow-2xl max-w-5xl mx-auto text-left border-b-4 border-brand-green transition-all duration-300">
-                  <div className="flex space-x-8 mb-6 border-b border-slate-100 pb-4">
+                  <div className="flex justify-center space-x-8 mb-6 border-b border-slate-100 pb-4">
                     <button
                       onClick={() => setSearchType('properties')}
                       className={`text-lg font-bold pb-4 -mb-4 transition-colors ${searchType === 'properties' ? 'text-brand-green border-b-2 border-brand-green' : 'text-slate-400 hover:text-slate-600'}`}

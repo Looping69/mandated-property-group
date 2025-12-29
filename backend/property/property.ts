@@ -7,6 +7,7 @@ import "./contractors";
 import "./conveyancers";
 import "./tours";
 import "./ai";
+import "./agents";
 
 // Define a Postgres database named 'property'
 export const db = new SQLDatabase("property", {
@@ -144,22 +145,7 @@ export const deleteProperty = api(
 );
 
 // Agents
-export const listAgents = api(
-    { expose: true, method: "GET", path: "/agents" },
-    async (): Promise<{ agents: Agent[] }> => {
-        const agents: Agent[] = [];
-        const rows = db.query`SELECT id, name, email, phone FROM agents`;
-        for await (const row of rows) {
-            agents.push({
-                id: row.id,
-                name: row.name,
-                email: row.email,
-                phone: row.phone,
-            });
-        }
-        return { agents };
-    }
-);
+// (Moved to agents.ts)
 
 // Inquiries
 export const listInquiries = api(

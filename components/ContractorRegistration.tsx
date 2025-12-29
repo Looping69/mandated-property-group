@@ -13,6 +13,7 @@ import { cn } from '../lib/utils';
 interface ContractorRegistrationProps {
     onSubmit: (contractor: any) => Promise<void>;
     onCancel?: () => void;
+    onDashboardRedirect: () => void;
 }
 
 const TRADE_CATEGORIES = [
@@ -46,7 +47,8 @@ const LOCATIONS = [
 
 export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
     onSubmit,
-    onCancel
+    onCancel,
+    onDashboardRedirect
 }) => {
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -100,8 +102,10 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
             };
 
             await onSubmit(contractorData);
+            setStep(4); // Move to Success Step
         } catch (error) {
             console.error('Registration failed:', error);
+            alert('Registration failed. Please try again.');
         } finally {
             setIsSubmitting(false);
         }
@@ -398,63 +402,102 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         </div>
     );
 
+    const renderStep4 = () => (
+        <div className="text-center space-y-6 animate-in fade-in zoom-in duration-300 py-8">
+            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle size={48} className="text-brand-green" />
+            </div>
+            <h3 className="text-3xl font-bold text-slate-900">Registration Successful!</h3>
+            <p className="text-lg text-slate-600 max-w-md mx-auto">
+                Welcome to the network, <span className="font-bold text-slate-900">{formData.name}</span>.
+                Your profile has been created and is now visible on the dashboard.
+            </p>
+
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-left max-w-sm mx-auto mt-8">
+                <p className="text-sm font-bold text-slate-900 mb-2">Next Steps:</p>
+                <ul className="text-sm text-slate-600 space-y-2 list-disc pl-4">
+                    <li>Complete your verification profile</li>
+                    <li>Upload portfolio images</li>
+                    <li>Set your availability schedule</li>
+                </ul>
+            </div>
+
+            <div className="pt-8">
+                <Button
+                    onClick={onDashboardRedirect}
+                    variant="brand"
+                    className="w-full py-6 text-lg shadow-xl"
+                >
+                    Go to Dashboard <ArrowRight className="ml-2" />
+                </Button>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-12 px-4">
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
                 <div className="text-center mb-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-emerald-600 rounded-2xl mb-4 shadow-lg">
-                        <Wrench size={32} className="text-white" />
-                    </div>
-                    <h1 className="text-4xl font-bold text-slate-900 mb-3">Join Our Network</h1>
-                    <p className="text-lg text-slate-600">Register as a Maintenance Service Provider</p>
+                    {step < 4 && (
+                        <>
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-emerald-600 rounded-2xl mb-4 shadow-lg">
+                                <Wrench size={32} className="text-white" />
+                            </div>
+                            <h1 className="text-4xl font-bold text-slate-900 mb-3">Join Our Network</h1>
+                            <p className="text-lg text-slate-600">Register as a Maintenance Service Provider</p>
+                        </>
+                    )}
                 </div>
 
                 {/* Form Card */}
                 <Card className="p-8 md:p-12 shadow-xl">
-                    {renderStepIndicator()}
+                    {step < 4 && renderStepIndicator()}
 
                     <form onSubmit={handleSubmit}>
                         {step === 1 && renderStep1()}
                         {step === 2 && renderStep2()}
                         {step === 3 && renderStep3()}
+                        {step === 4 && renderStep4()}
 
                         {/* Navigation Buttons */}
-                        <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
-                            {step > 1 && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setStep(step - 1)}
-                                    className="flex-1"
-                                >
-                                    Back
-                                </Button>
-                            )}
-                            {step < 3 ? (
-                                <Button
-                                    type="button"
-                                    variant="brand"
-                                    onClick={() => setStep(step + 1)}
-                                    disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()}
-                                    className="flex-1"
-                                >
-                                    Continue <ArrowRight size={16} className="ml-2" />
-                                </Button>
-                            ) : (
-                                <Button
-                                    type="submit"
-                                    variant="brand"
-                                    disabled={isSubmitting}
-                                    className="flex-1"
-                                >
-                                    {isSubmitting ? 'Submitting...' : 'Submit Registration'}
-                                    {!isSubmitting && <CheckCircle size={16} className="ml-2" />}
-                                </Button>
-                            )}
-                        </div>
+                        {step < 4 && (
+                            <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
+                                {step > 1 && (
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setStep(step - 1)}
+                                        className="flex-1"
+                                    >
+                                        Back
+                                    </Button>
+                                )}
+                                {step < 3 ? (
+                                    <Button
+                                        type="button"
+                                        variant="brand"
+                                        onClick={() => setStep(step + 1)}
+                                        disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()}
+                                        className="flex-1"
+                                    >
+                                        Continue <ArrowRight size={16} className="ml-2" />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        type="submit"
+                                        variant="brand"
+                                        disabled={isSubmitting}
+                                        className="flex-1"
+                                    >
+                                        {isSubmitting ? 'Submitting...' : 'Submit Registration'}
+                                        {!isSubmitting && <CheckCircle size={16} className="ml-2" />}
+                                    </Button>
+                                )}
+                            </div>
+                        )}
 
-                        {onCancel && (
+                        {onCancel && step < 4 && (
                             <button
                                 type="button"
                                 onClick={onCancel}
@@ -467,20 +510,22 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 </Card>
 
                 {/* Trust Indicators */}
-                <div className="mt-8 grid grid-cols-3 gap-4 text-center">
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <p className="text-2xl font-bold text-brand-green">500+</p>
-                        <p className="text-xs text-slate-500 font-bold uppercase">Active Providers</p>
+                {step < 4 && (
+                    <div className="mt-8 grid grid-cols-3 gap-4 text-center">
+                        <div className="bg-white rounded-lg p-4 shadow-sm">
+                            <p className="text-2xl font-bold text-brand-green">500+</p>
+                            <p className="text-xs text-slate-500 font-bold uppercase">Active Providers</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 shadow-sm">
+                            <p className="text-2xl font-bold text-brand-green">4.8★</p>
+                            <p className="text-xs text-slate-500 font-bold uppercase">Avg Rating</p>
+                        </div>
+                        <div className="bg-white rounded-lg p-4 shadow-sm">
+                            <p className="text-2xl font-bold text-brand-green">24/7</p>
+                            <p className="text-xs text-slate-500 font-bold uppercase">Platform Access</p>
+                        </div>
                     </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <p className="text-2xl font-bold text-brand-green">4.8★</p>
-                        <p className="text-xs text-slate-500 font-bold uppercase">Avg Rating</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-4 shadow-sm">
-                        <p className="text-2xl font-bold text-brand-green">24/7</p>
-                        <p className="text-xs text-slate-500 font-bold uppercase">Platform Access</p>
-                    </div>
-                </div>
+                )}
             </div>
         </div>
     );

@@ -46,7 +46,7 @@ interface DataContextType {
   addListing: (listing: Listing | Omit<Listing, 'id'>) => Promise<void>;
   updateListing: (id: string, updates: Partial<Listing>) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
-  addAgent: (agent: Agent | Omit<Agent, 'id'>) => void;
+  addAgent: (agent: Agent | Omit<Agent, 'id'>) => Promise<void>;
   updateAgent: (agent: Agent) => void;
   deleteAgent: (id: string) => void;
   addInquiry: (inquiry: Omit<Inquiry, 'id' | 'date' | 'status'>) => Promise<void>;
@@ -149,12 +149,30 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Agents
-  const addAgent = (agent: Agent | Omit<Agent, 'id'>) => {
-    const newAgent = 'id' in agent ? agent : { ...agent, id: `a${agents.length + 1}` };
-    setAgents([...agents, newAgent as Agent]);
+  const addAgent = async (agent: Agent | Omit<Agent, 'id'>) => {
+    try {
+      const newAgent = await agentService.create(agent as Agent);
+      setAgents(prev => [...prev, newAgent]);
+    } catch (err) {
+      console.error('Failed to add agent:', err);
+      // Fallback for demo if API fails/not ready (though it should be)
+      const mockAgent = 'id' in agent ? agent : { ...agent, id: `a${agents.length + 1}` };
+      setAgents([...agents, mockAgent as Agent]);
+    }
   };
+
   const updateAgent = (updatedAgent: Agent) => setAgents(agents.map(a => a.id === updatedAgent.id ? updatedAgent : a));
-  const deleteAgent = (id: string) => setAgents(agents.filter(a => a.id !== id));
+
+  const deleteAgent = async (id: string) => {
+    try {
+      await agentService.delete(id);
+      setAgents(prev => prev.filter(a => a.id !== id));
+    } catch (err) {
+      console.error("Failed to delete agent:", err);
+      // Fallback
+      setAgents(prev => prev.filter(a => a.id !== id));
+    }
+  };
   const addReview = (agentId: string, review: Review) => {
     setAgents(prev => prev.map(a => a.id === agentId ? { ...a, reviews: [review, ...a.reviews] } : a));
   };

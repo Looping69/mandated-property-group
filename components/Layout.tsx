@@ -83,11 +83,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               </SignedIn>
               <SignedOut>
                 <button
-                  onClick={() => onChangeView(AppView.CONTRACTOR_REGISTRATION)}
+                  onClick={() => onChangeView(AppView.JOIN_SELECTION)}
                   className="flex items-center border-2 border-brand-green text-brand-green hover:bg-brand-green hover:text-white px-4 py-2 rounded-md font-bold text-sm transition-all"
                 >
-                  <Wrench size={16} className="mr-2" />
-                  Join as Contractor
+                  <Users size={16} className="mr-2" />
+                  Join Network
                 </button>
                 <button
                   onClick={() => openSignIn()}
@@ -137,10 +137,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
 
               <SignedOut>
                 <button
-                  onClick={() => { onChangeView(AppView.CONTRACTOR_REGISTRATION); setIsMenuOpen(false); }}
+                  onClick={() => { onChangeView(AppView.JOIN_SELECTION); setIsMenuOpen(false); }}
                   className="flex items-center border-2 border-brand-green text-brand-green justify-center px-4 py-3 rounded-md font-bold w-full mb-2"
                 >
-                  <Wrench size={18} className="mr-2" /> Join as Contractor
+                  <Users size={18} className="mr-2" /> Join Our Network
                 </button>
                 <button
                   onClick={() => openSignIn()}
@@ -192,8 +192,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                 <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.CONVEYANCER)}>Find Your Conveyancer</li>
                 <li className="hover:text-brand-green cursor-pointer">Calculators</li>
                 <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.MAINTENANCE)}>Maintenance Services</li>
-                <li className="hover:text-brand-green cursor-pointer font-bold flex items-center gap-2" onClick={() => onChangeView(AppView.CONTRACTOR_REGISTRATION)}>
-                  <Wrench size={14} /> Register as Contractor
+                <li className="hover:text-brand-green cursor-pointer font-bold flex items-center gap-2" onClick={() => onChangeView(AppView.JOIN_SELECTION)}>
+                  <Users size={14} /> Join Our Network
                 </li>
               </ul>
             </div>
