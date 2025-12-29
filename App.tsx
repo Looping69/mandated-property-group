@@ -18,6 +18,8 @@ import { ContractorRegistration } from './components/ContractorRegistration';
 import { JoinSelection } from './components/JoinSelection';
 import { AgencyRegistration } from './components/AgencyRegistration';
 import { AgentRegistration } from './components/AgentRegistration';
+import { AgentDashboard } from './components/AgentDashboard';
+import { MaintenanceDashboard } from './components/MaintenanceDashboard';
 
 import { AppView, Listing, VirtualTour, Contractor, UserRole } from './types';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -33,7 +35,10 @@ const InnerApp = () => {
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
   const [activeTour, setActiveTour] = useState<VirtualTour | null>(null);
   const [searchType, setSearchType] = useState<'properties' | 'agents'>('properties');
-  const { listings, agents, updateAgent, addContractor } = useData();
+  const {
+    listings, agents, virtualTours, inquiries, maintenanceRequests, contractors,
+    updateAgent, addContractor, addListing, updateListing, deleteListing, updateMaintenanceRequest
+  } = useData();
   const { user } = useUser();
 
   const handleAgentImageUpdate = (id: string, newImage: string) => {
@@ -150,6 +155,37 @@ const InnerApp = () => {
             onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
           />
         );
+      case AppView.AGENT_DASHBOARD: {
+        const currentAgent = agents.find(a => a.id === agentId) || agents[0]; // Fallback to first agent
+        return (
+          <AgentDashboard
+            currentAgent={currentAgent}
+            listings={listings}
+            virtualTours={virtualTours}
+            inquiries={inquiries}
+            addListing={addListing}
+            updateListing={updateListing}
+            deleteListing={deleteListing}
+            handleAIDescription={async (l) => {
+              console.log("Generating AI description for", l);
+              return "This is an AI generated description placeholder. Connect to Gemini API for real generation.";
+            }}
+            onNavigateToTourCreator={() => setCurrentView(AppView.TOUR_CREATOR)}
+          />
+        );
+      }
+      case AppView.MAINTENANCE_DASHBOARD: {
+        // In a real app, getting the logged-in contractor
+        const currentContractor = contractors[0] || { id: 'c1', name: 'Demo Contractor', trade: 'General', location: 'CT', rating: 5, image: '', phone: '', email: '', description: '', isVerified: true };
+        return (
+          <MaintenanceDashboard
+            currentContractor={currentContractor}
+            requests={maintenanceRequests}
+            listings={listings}
+            updateRequest={updateMaintenanceRequest}
+          />
+        );
+      }
       case AppView.LISTINGS:
         return (
           <div className="max-w-7xl mx-auto px-4 py-12">
@@ -205,7 +241,7 @@ const InnerApp = () => {
                   {searchType === 'properties' ? (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-2">
                       <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>Property Type</option><option>House</option><option>Apartment</option></select></div>
-                      <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>Province</option><option>Western Cape</option><option>Gauteng</option></select></div>
+                      <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>Province</option><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>Northern Cape</option><option>North West</option><option>Western Cape</option></select></div>
                       <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>City</option><option>Cape Town</option></select></div>
                       <div className="relative"><div className="absolute left-3 top-3 text-slate-400"><MapPin size={20} /></div><input type="text" placeholder="Area or Suburb" className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none" /></div>
                     </div>

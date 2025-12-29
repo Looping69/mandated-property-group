@@ -384,7 +384,16 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
                                             <Button variant="outline" size="sm" className="flex-1">
                                                 <Eye size={14} className="mr-1" /> View
                                             </Button>
-                                            <Button variant="ghost" size="sm">
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setNewListing(listing);
+                                                    setIsCreatingListing(true);
+                                                    setEditingListing(listing);
+                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                }}
+                                            >
                                                 <Edit size={14} />
                                             </Button>
                                             <Button
