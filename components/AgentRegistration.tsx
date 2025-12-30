@@ -53,7 +53,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
         setIsSubmitting(true);
         // Simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500));
-        await onSubmit(formData);
+        setStep(4);
         setIsSubmitting(false);
     };
 
@@ -184,35 +184,74 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
         </div>
     );
 
+    const renderStep4 = () => (
+        <div className="text-center space-y-6 animate-in fade-in zoom-in duration-300 py-8">
+            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle size={48} className="text-brand-green" />
+            </div>
+            <h3 className="text-3xl font-bold text-slate-900">Registration Complete!</h3>
+            <p className="text-lg text-slate-600 max-w-md mx-auto">
+                Welcome to the network, <span className="font-bold text-slate-900">{formData.name}</span>.
+                Your profile has been submitted for verification.
+            </p>
+
+            <div className="bg-slate-50 p-6 rounded-xl border border-slate-200 text-left max-w-sm mx-auto mt-8">
+                <p className="text-sm font-bold text-slate-900 mb-2">Next Steps:</p>
+                <ul className="text-sm text-slate-600 space-y-2 list-disc pl-4">
+                    <li>FFC Number verification</li>
+                    <li>Profile photos approval</li>
+                    <li>Access to Lead Management tools</li>
+                </ul>
+            </div>
+
+            <div className="pt-8">
+                <Button
+                    onClick={() => onSubmit(formData)}
+                    variant="brand"
+                    className="w-full py-6 text-lg shadow-xl"
+                >
+                    Go to Portal <ArrowRight className="ml-2" />
+                </Button>
+            </div>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-12 px-4">
             <div className="max-w-2xl mx-auto">
                 <div className="text-center mb-12">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-teal-600 rounded-2xl mb-4 shadow-lg">
-                        <User size={32} className="text-white" />
-                    </div>
-                    <h1 className="text-4xl font-bold text-slate-900 mb-3">Agent Registration</h1>
-                    <p className="text-lg text-slate-600">Build your personal brand with us</p>
+                    {step < 4 && (
+                        <>
+                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-teal-600 rounded-2xl mb-4 shadow-lg">
+                                <User size={32} className="text-white" />
+                            </div>
+                            <h1 className="text-4xl font-bold text-slate-900 mb-3">Agent Registration</h1>
+                            <p className="text-lg text-slate-600">Build your personal brand with us</p>
+                        </>
+                    )}
                 </div>
 
                 <Card className="p-8 md:p-12 shadow-xl">
-                    {renderStepIndicator()}
+                    {step < 4 && renderStepIndicator()}
                     <form onSubmit={handleSubmit}>
                         {step === 1 && renderStep1()}
                         {step === 2 && renderStep2()}
                         {step === 3 && renderStep3()}
+                        {step === 4 && renderStep4()}
 
-                        <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
-                            {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} className="flex-1">Back</Button>}
-                            {step < 3 ? (
-                                <Button type="button" variant="brand" onClick={() => setStep(step + 1)} disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()} className="flex-1">Continue <ArrowRight size={16} className="ml-2" /></Button>
-                            ) : (
-                                <Button type="submit" variant="brand" disabled={isSubmitting} className="flex-1">{isSubmitting ? 'Registering...' : 'Complete Registration'}</Button>
-                            )}
-                        </div>
+                        {step < 4 && (
+                            <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
+                                {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} className="flex-1">Back</Button>}
+                                {step < 3 ? (
+                                    <Button type="button" variant="brand" onClick={() => setStep(step + 1)} disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()} className="flex-1">Continue <ArrowRight size={16} className="ml-2" /></Button>
+                                ) : (
+                                    <Button type="submit" variant="brand" disabled={isSubmitting} className="flex-1">{isSubmitting ? 'Registering...' : 'Complete Registration'}</Button>
+                                )}
+                            </div>
+                        )}
                     </form>
                 </Card>
-                {onCancel && <button onClick={onCancel} className="w-full mt-8 text-slate-400 hover:text-slate-600 font-medium text-sm">Cancel Registration</button>}
+                {onCancel && step < 4 && <button onClick={onCancel} className="w-full mt-8 text-slate-400 hover:text-slate-600 font-medium text-sm">Cancel Registration</button>}
             </div>
         </div>
     );

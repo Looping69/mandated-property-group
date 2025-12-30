@@ -71,7 +71,8 @@ export const LISTINGS: Listing[] = [
     agentId: 'a1',
     description: 'Perched above the Atlantic Seaboard, this architectural masterpiece features floor-to-ceiling glass, an infinity pool blending with the ocean horizon, and a private elevator. The master suite encompasses the entire top floor.',
     isFeatured: true,
-    status: 'active'
+    status: 'active',
+    propertyType: 'House'
   },
   {
     id: 'l2',
@@ -87,6 +88,7 @@ export const LISTINGS: Listing[] = [
     description: 'A meticulously restored Cape Dutch homestead surrounded by working vineyards. Features a temperature-controlled wine cellar, guest cottages, a commercial-grade kitchen, and panoramic mountain views.',
     isFeatured: true,
     status: 'on_show',
+    propertyType: 'House',
     onShowDate: 'Sunday 14:00 - 17:00'
   },
   {
@@ -102,7 +104,8 @@ export const LISTINGS: Listing[] = [
     agentId: 'a1',
     description: 'Dominating the richest square mile in Africa, this triplex penthouse features 360-degree city views, private security detail, a rooftop jacuzzi, and bespoke Italian interiors.',
     isFeatured: true,
-    status: 'reduced'
+    status: 'reduced',
+    propertyType: 'Apartment'
   },
   {
     id: 'l4',
@@ -117,7 +120,8 @@ export const LISTINGS: Listing[] = [
     agentId: 'a3',
     description: 'A modern tropical sanctuary nestled in the forest canopy. Features extensive entertainment decks, ocean glimpses, direct beach access, and access to world-class golf facilities.',
     isFeatured: false,
-    status: 'new'
+    status: 'new',
+    propertyType: 'House'
   },
   {
     id: 'l5',
@@ -132,7 +136,8 @@ export const LISTINGS: Listing[] = [
     agentId: 'a2',
     description: 'A sprawling family estate set on 2 acres of lush manicured gardens. Includes a tennis court, borehole water system, and a separate entertainment pavilion.',
     isFeatured: false,
-    status: 'active'
+    status: 'active',
+    propertyType: 'House'
   },
   {
     id: 'l6',
@@ -147,7 +152,8 @@ export const LISTINGS: Listing[] = [
     agentId: 'a3',
     description: 'Modern farmhouse architecture meets equestrian luxury. Stable facilities for 4 horses, paddocks, and a state-of-the-art smart home system.',
     isFeatured: false,
-    status: 'active'
+    status: 'active',
+    propertyType: 'House'
   },
   {
     id: 'l7',
@@ -162,7 +168,8 @@ export const LISTINGS: Listing[] = [
     agentId: 'a1',
     description: 'Sunset views guaranteed. This multi-level villa offers rental income potential and luxury living with a rim-flow pool and cinema room.',
     isFeatured: false,
-    status: 'sold'
+    status: 'sold',
+    propertyType: 'House'
   },
   {
     id: 'l8',
@@ -177,6 +184,19 @@ export const LISTINGS: Listing[] = [
     agentId: 'a3',
     description: 'High-rise luxury living in the heart of Umhlanga. Concierge service, facial recognition access, and immediate access to premium retail outlets.',
     isFeatured: false,
-    status: 'new'
+    status: 'new',
+    propertyType: 'Apartment'
   }
 ];
+
+export const PROVINCES_CITIES: Record<string, string[]> = {
+  'Eastern Cape': ['Gqeberha (Port Elizabeth)', 'East London', 'Mthatha', 'Makhanda', 'Kariega', 'Queenstown'],
+  'Free State': ['Bloemfontein', 'Welkom', 'Sasolburg', 'Bethlehem', 'Kroonstad', 'Parys'],
+  'Gauteng': ['Johannesburg', 'Pretoria', 'Soweto', 'Sandton', 'Midrand', 'Centurion', 'Benoni', 'Krugersdorp', 'Soshanguve'],
+  'KwaZulu-Natal': ['Durban', 'Pietermaritzburg', 'Umhlanga', 'Ballito', 'Richards Bay', 'Newcastle', 'Ladysmith'],
+  'Limpopo': ['Polokwane', 'Tzaneen', 'Musina', 'Phalaborwa', 'Mokopane', 'Thohoyandou'],
+  'Mpumalanga': ['Mbombela (Nelspruit)', 'Emalahleni (Witbank)', 'Secunda', 'Ermelo', 'Middelburg', 'White River'],
+  'Northern Cape': ['Kimberley', 'Upington', 'Springbok', 'Kuruman', 'De Aar', 'Kathu'],
+  'North West': ['Mahikeng', 'Klerksdorp', 'Rustenburg', 'Potchefstroom', 'Brits', 'Vryburg'],
+  'Western Cape': ['Cape Town', 'Stellenbosch', 'George', 'Paarl', 'Hermanus', 'Mossel Bay', 'Knysna', 'Worcester', 'Somerset West']
+};

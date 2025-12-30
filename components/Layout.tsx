@@ -54,7 +54,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center space-x-6">
               <NavLink view={AppView.HOME} label="Home" />
-              <NavLink view={AppView.AGENTS} label="Agents" />
+              <NavLink view={AppView.AGENTS} label="Top Area Agents" />
               <NavLink view={AppView.LISTINGS} label="Listings" />
               <NavLink view={AppView.CONVEYANCER} label="Conveyancers" />
               <NavLink view={AppView.MAINTENANCE} label="Maintenance" />
@@ -233,9 +233,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
           <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400">
             <p>© {new Date().getFullYear()} Show House Property. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <span className="cursor-pointer hover:text-white">Privacy Policy</span>
-              <span className="cursor-pointer hover:text-white">Terms of Service</span>
-              <span className="cursor-pointer hover:text-white">POPIA Act Compliance</span>
+              <span className="cursor-pointer hover:text-white" onClick={() => onChangeView(AppView.PRIVACY_POLICY)}>Privacy Policy</span>
+              <span className="cursor-pointer hover:text-white" onClick={() => onChangeView(AppView.TERMS_OF_SERVICE)}>Terms of Service</span>
+              <span className="cursor-pointer hover:text-white" onClick={() => onChangeView(AppView.POPIA_COMPLIANCE)}>POPIA Act Compliance</span>
             </div>
           </div>
         </div>

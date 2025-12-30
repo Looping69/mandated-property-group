@@ -34,6 +34,7 @@ export interface Listing {
   description: string;
   isFeatured?: boolean;
   status: ListingStatus;
+  propertyType: 'House' | 'Apartment' | 'Townhouse' | 'Commercial' | 'Land';
   onShowDate?: string; // e.g., "Sunday 14:00 - 17:00"
 }
 
@@ -126,7 +127,10 @@ export enum AppView {
   CONTRACTOR_REGISTRATION = 'CONTRACTOR_REGISTRATION',
   JOIN_SELECTION = 'JOIN_SELECTION',
   REGISTER_AGENCY = 'REGISTER_AGENCY',
-  REGISTER_AGENT = 'REGISTER_AGENT'
+  REGISTER_AGENT = 'REGISTER_AGENT',
+  PRIVACY_POLICY = 'PRIVACY_POLICY',
+  TERMS_OF_SERVICE = 'TERMS_OF_SERVICE',
+  POPIA_COMPLIANCE = 'POPIA_COMPLIANCE'
 }
 
 export type UserRole = 'AGENCY' | 'AGENT' | 'CONTRACTOR';

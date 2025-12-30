@@ -140,13 +140,31 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
                                     />
                                 </div>
                             </div>
-                            <div className="mt-4">
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Full Address</label>
-                                <Input
-                                    placeholder="e.g. 42 Ocean View Drive, Clifton, Cape Town"
-                                    value={newListing.address}
-                                    onChange={e => setNewListing({ ...newListing, address: e.target.value })}
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Full Address</label>
+                                    <Input
+                                        placeholder="e.g. 42 Ocean View Drive, Clifton, Cape Town"
+                                        value={newListing.address}
+                                        onChange={e => setNewListing({ ...newListing, address: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Property Type</label>
+                                    <select
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer h-10"
+                                        value={newListing.propertyType || ''}
+                                        onChange={e => setNewListing({ ...newListing, propertyType: e.target.value as any })}
+                                        required
+                                    >
+                                        <option value="">Select Type</option>
+                                        <option value="House">House</option>
+                                        <option value="Apartment">Apartment</option>
+                                        <option value="Townhouse">Townhouse</option>
+                                        <option value="Commercial">Commercial Property</option>
+                                        <option value="Land">Land / Plot</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
