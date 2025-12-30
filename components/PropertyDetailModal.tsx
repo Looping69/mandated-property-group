@@ -3,9 +3,9 @@
 
 import React, { useState } from 'react';
 import {
-    X, MapPin, BedDouble, Bath, Square, Calendar,
+    X, MapPin, BedDouble, Bath, Car, Waves, Calendar,
     Phone, Mail, Play, ChevronRight, Share2, Heart,
-    Info, ShieldCheck, Sparkles
+    Info, ShieldCheck, Sparkles, PawPrint
 } from 'lucide-react';
 import { Listing, VirtualTour } from '../types';
 import { useData } from '../contexts/DataContext';
@@ -84,16 +84,17 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({ listin
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-1 mb-8 border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
+                    <div className="grid grid-cols-4 gap-1 mb-8 border border-slate-100 rounded-2xl overflow-hidden bg-slate-50/50">
                         {[
                             { icon: BedDouble, label: 'Beds', value: listing.beds },
                             { icon: Bath, label: 'Baths', value: listing.baths },
-                            { icon: Square, label: 'Size', value: `${listing.size}m²` }
+                            { icon: Car, label: 'Garage', value: listing.garage },
+                            { icon: Waves, label: 'Pool', value: listing.pool === 'none' ? 'No' : listing.pool.charAt(0).toUpperCase() + listing.pool.slice(1) }
                         ].map((stat, i) => (
-                            <div key={i} className="py-4 px-2 flex flex-col items-center border-r last:border-0 border-slate-100">
+                            <div key={i} className="py-4 px-1 flex flex-col items-center border-r last:border-0 border-slate-100">
                                 <stat.icon size={20} className="text-slate-400 mb-1" />
-                                <span className="font-bold text-slate-900 leading-tight">{stat.value}</span>
-                                <span className="text-[10px] text-slate-400 uppercase tracking-wider">{stat.label}</span>
+                                <span className="font-bold text-slate-800 text-[11px] text-center leading-tight truncate w-full px-1">{stat.value}</span>
+                                <span className="text-[9px] text-slate-400 uppercase tracking-wider">{stat.label}</span>
                             </div>
                         ))}
                     </div>
@@ -102,6 +103,20 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({ listin
                         <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-3 flex items-center border-l-2 border-brand-green pl-3">Description</h3>
                         <p className="text-slate-600 text-sm leading-relaxed line-clamp-6 mb-4">{listing.description}</p>
                         <button className="text-brand-green text-sm font-bold hover:underline">Read full description</button>
+                    </div>
+
+                    <div className="mb-8">
+                        <div className="flex gap-2">
+                            {listing.isPetFriendly ? (
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100 italic">
+                                    <PawPrint size={14} /> Pet Friendly Property
+                                </div>
+                            ) : (
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-50 text-slate-500 rounded-full text-xs font-bold border border-slate-100 italic">
+                                    <ShieldCheck size={14} /> No Pets Allowed
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     {/* Agent Section */}
@@ -132,12 +147,20 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({ listin
                             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Market Value</span>
                             <div className="text-4xl font-bold text-slate-900 tracking-tight">R {(listing.price).toLocaleString('en-ZA')}</div>
                         </div>
-                        {listing.status === 'on_show' && (
+                        {listing.viewingType === 'on_show' ? (
                             <div className="bg-amber-50 border border-amber-100 rounded-xl p-4 flex items-center gap-4">
                                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-amber-500 shadow-sm"><Calendar size={20} /></div>
                                 <div>
-                                    <div className="text-xs font-bold text-amber-800 uppercase tracking-tight">On Show Sunday</div>
-                                    <div className="text-sm font-bold text-amber-600">14:00 - 17:00 PM</div>
+                                    <div className="text-xs font-extrabold text-amber-800 uppercase tracking-tight">On Show - Save the Date</div>
+                                    <div className="text-sm font-bold text-amber-600">{listing.onShowDate || "Contact for times"}</div>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-brand-green/5 border border-brand-green/10 rounded-xl p-4 flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-brand-green shadow-sm"><Calendar size={20} /></div>
+                                <div>
+                                    <div className="text-xs font-extrabold text-slate-800 uppercase tracking-tight">Viewing by Appointment Only</div>
+                                    <div className="text-sm font-bold text-brand-green">Contact Agent to Schedule</div>
                                 </div>
                             </div>
                         )}

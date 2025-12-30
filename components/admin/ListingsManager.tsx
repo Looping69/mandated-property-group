@@ -193,13 +193,32 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Size (m²)</label>
-                                    <Input
-                                        type="number"
-                                        placeholder="0"
-                                        value={newListing.size || ''}
-                                        onChange={e => setNewListing({ ...newListing, size: Number(e.target.value) })}
-                                    />
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Garage Type</label>
+                                    <select
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer h-10 text-sm"
+                                        value={newListing.garage || ''}
+                                        onChange={e => setNewListing({ ...newListing, garage: e.target.value })}
+                                    >
+                                        <option value="">Select Garage</option>
+                                        <option value="None">None</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Double">Double</option>
+                                        <option value="Triple">Triple</option>
+                                        <option value="4+ Cars">4+ Cars</option>
+                                        <option value="Reserved">Reserved/Parking Bay</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Swimming Pool</label>
+                                    <select
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer h-10 text-sm"
+                                        value={newListing.pool || ''}
+                                        onChange={e => setNewListing({ ...newListing, pool: e.target.value as any })}
+                                    >
+                                        <option value="none">None</option>
+                                        <option value="private">Private</option>
+                                        <option value="communal">Communal</option>
+                                    </select>
                                 </div>
                                 <div className="flex items-end">
                                     <label className="flex items-center gap-3 cursor-pointer bg-slate-50 px-4 py-2.5 rounded-lg border border-slate-200 w-full hover:bg-slate-100 transition-colors">
@@ -211,9 +230,45 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
                                         />
                                         <div>
                                             <span className="text-sm font-bold text-slate-700 block">Featured</span>
-                                            <span className="text-[10px] text-slate-400">Homepage highlight</span>
+                                            <span className="text-[10px] text-slate-400">Highlight Property</span>
                                         </div>
                                     </label>
+                                </div>
+                                <div className="flex items-end">
+                                    <label className="flex items-center gap-3 cursor-pointer bg-slate-50 px-4 py-2.5 rounded-lg border border-slate-200 w-full hover:bg-slate-100 transition-colors">
+                                        <input
+                                            type="checkbox"
+                                            checked={newListing.isPetFriendly}
+                                            onChange={e => setNewListing({ ...newListing, isPetFriendly: e.target.checked })}
+                                            className="rounded border-slate-300 text-brand-green focus:ring-brand-green w-4 h-4"
+                                        />
+                                        <div>
+                                            <span className="text-sm font-bold text-slate-700 block">Pet Friendly</span>
+                                            <span className="text-[10px] text-slate-400">Allows pets</span>
+                                        </div>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Viewing Type</label>
+                                    <select
+                                        className="w-full p-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer h-10 text-sm"
+                                        value={newListing.viewingType || 'appointment'}
+                                        onChange={e => setNewListing({ ...newListing, viewingType: e.target.value as any, status: e.target.value === 'on_show' ? 'on_show' : newListing.status })}
+                                    >
+                                        <option value="appointment">By Appointment</option>
+                                        <option value="on_show">On Show (Scheduled)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">On Show Date/Time</label>
+                                    <Input
+                                        type="text"
+                                        placeholder="Sunday 14:00 - 17:00"
+                                        disabled={newListing.viewingType !== 'on_show'}
+                                        value={newListing.onShowDate || ''}
+                                        onChange={e => setNewListing({ ...newListing, onShowDate: e.target.value })}
+                                        className={newListing.viewingType !== 'on_show' ? 'opacity-50' : ''}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -372,9 +427,9 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
                                             </div>
                                             <div className="flex items-center gap-1.5 text-slate-600">
                                                 <div className="w-6 h-6 bg-slate-100 rounded flex items-center justify-center">
-                                                    <span className="text-xs font-bold">{listing.size || '—'}</span>
+                                                    <span className="text-xs font-bold">{listing.garage || '—'}</span>
                                                 </div>
-                                                <span className="text-xs">m²</span>
+                                                <span className="text-xs">Garage</span>
                                             </div>
                                         </div>
 

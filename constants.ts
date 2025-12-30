@@ -65,14 +65,17 @@ export const LISTINGS: Listing[] = [
     address: '52 Nettleton Road, Clifton, Cape Town',
     beds: 5,
     baths: 6.5,
-    size: 950, // m²
+    garage: 'Triple',
+    pool: 'private',
     image: 'https://picsum.photos/id/164/1200/800',
     images: ['https://picsum.photos/id/164/800/600', 'https://picsum.photos/id/188/800/600'],
     agentId: 'a1',
     description: 'Perched above the Atlantic Seaboard, this architectural masterpiece features floor-to-ceiling glass, an infinity pool blending with the ocean horizon, and a private elevator. The master suite encompasses the entire top floor.',
     isFeatured: true,
     status: 'active',
-    propertyType: 'House'
+    propertyType: 'House',
+    isPetFriendly: true,
+    viewingType: 'appointment'
   },
   {
     id: 'l2',
@@ -81,7 +84,8 @@ export const LISTINGS: Listing[] = [
     address: 'Dieu Donne Way, Franschhoek, Winelands',
     beds: 8,
     baths: 9,
-    size: 2200, // m²
+    garage: '6+ Cars',
+    pool: 'private',
     image: 'https://picsum.photos/id/122/1200/800',
     images: ['https://picsum.photos/id/122/800/600', 'https://picsum.photos/id/233/800/600'],
     agentId: 'a2',
@@ -89,6 +93,8 @@ export const LISTINGS: Listing[] = [
     isFeatured: true,
     status: 'on_show',
     propertyType: 'House',
+    isPetFriendly: true,
+    viewingType: 'on_show',
     onShowDate: 'Sunday 14:00 - 17:00'
   },
   {
@@ -98,14 +104,17 @@ export const LISTINGS: Listing[] = [
     address: 'Maude Street, Sandton, Johannesburg',
     beds: 4,
     baths: 4.5,
-    size: 650, // m²
+    garage: 'Reserved P1',
+    pool: 'communal',
     image: 'https://picsum.photos/id/184/1200/800',
     images: ['https://picsum.photos/id/184/800/600', 'https://picsum.photos/id/403/800/600'],
     agentId: 'a1',
     description: 'Dominating the richest square mile in Africa, this triplex penthouse features 360-degree city views, private security detail, a rooftop jacuzzi, and bespoke Italian interiors.',
     isFeatured: true,
     status: 'reduced',
-    propertyType: 'Apartment'
+    propertyType: 'Apartment',
+    isPetFriendly: false,
+    viewingType: 'appointment'
   },
   {
     id: 'l4',
@@ -114,14 +123,17 @@ export const LISTINGS: Listing[] = [
     address: 'Mahogany Drive, Zimbali Estate, KZN',
     beds: 5,
     baths: 5,
-    size: 580, // m²
+    garage: 'Double',
+    pool: 'communal',
     image: 'https://picsum.photos/id/75/1200/800',
     images: ['https://picsum.photos/id/75/800/600'],
     agentId: 'a3',
     description: 'A modern tropical sanctuary nestled in the forest canopy. Features extensive entertainment decks, ocean glimpses, direct beach access, and access to world-class golf facilities.',
     isFeatured: false,
     status: 'new',
-    propertyType: 'House'
+    propertyType: 'House',
+    isPetFriendly: true,
+    viewingType: 'appointment'
   },
   {
     id: 'l5',
@@ -130,14 +142,17 @@ export const LISTINGS: Listing[] = [
     address: 'Southern Cross Drive, Constantia',
     beds: 6,
     baths: 6,
-    size: 1100,
+    garage: 'Double',
+    pool: 'private',
     image: 'https://picsum.photos/id/28/1200/800',
     images: ['https://picsum.photos/id/28/800/600'],
     agentId: 'a2',
     description: 'A sprawling family estate set on 2 acres of lush manicured gardens. Includes a tennis court, borehole water system, and a separate entertainment pavilion.',
     isFeatured: false,
     status: 'active',
-    propertyType: 'House'
+    propertyType: 'House',
+    isPetFriendly: true,
+    viewingType: 'appointment'
   },
   {
     id: 'l6',
@@ -146,14 +161,17 @@ export const LISTINGS: Listing[] = [
     address: 'Waterfall Estate, Midrand',
     beds: 4,
     baths: 4,
-    size: 850,
+    garage: 'Triple',
+    pool: 'none',
     image: 'https://picsum.photos/id/49/1200/800',
     images: ['https://picsum.photos/id/49/800/600'],
     agentId: 'a3',
     description: 'Modern farmhouse architecture meets equestrian luxury. Stable facilities for 4 horses, paddocks, and a state-of-the-art smart home system.',
     isFeatured: false,
     status: 'active',
-    propertyType: 'House'
+    propertyType: 'House',
+    isPetFriendly: true,
+    viewingType: 'appointment'
   },
   {
     id: 'l7',
@@ -162,14 +180,17 @@ export const LISTINGS: Listing[] = [
     address: 'Geneva Drive, Camps Bay',
     beds: 5,
     baths: 5.5,
-    size: 720,
+    garage: 'Double',
+    pool: 'private',
     image: 'https://picsum.photos/id/58/1200/800',
     images: ['https://picsum.photos/id/58/800/600'],
     agentId: 'a1',
     description: 'Sunset views guaranteed. This multi-level villa offers rental income potential and luxury living with a rim-flow pool and cinema room.',
     isFeatured: false,
     status: 'sold',
-    propertyType: 'House'
+    propertyType: 'House',
+    isPetFriendly: true,
+    viewingType: 'appointment'
   },
   {
     id: 'l8',
@@ -178,14 +199,17 @@ export const LISTINGS: Listing[] = [
     address: 'Umhlanga Rocks Drive, Durban',
     beds: 2,
     baths: 2,
-    size: 120,
+    garage: 'Basement',
+    pool: 'communal',
     image: 'https://picsum.photos/id/238/1200/800',
     images: ['https://picsum.photos/id/238/800/600'],
     agentId: 'a3',
     description: 'High-rise luxury living in the heart of Umhlanga. Concierge service, facial recognition access, and immediate access to premium retail outlets.',
     isFeatured: false,
     status: 'new',
-    propertyType: 'Apartment'
+    propertyType: 'Apartment',
+    isPetFriendly: false,
+    viewingType: 'appointment'
   }
 ];
 

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
     Plus, Home, TrendingUp, MapPin, Calendar, DollarSign,
     Eye, Edit, Trash2, Image as ImageIcon, Sparkles, Upload,
-    BarChart3, Users, Phone, Mail, Video
+    BarChart3, Users, Phone, Mail, Video, PawPrint, Car
 } from 'lucide-react';
 import { Card, Badge, Input } from './admin/Shared';
 import { Button } from './ui/button';
@@ -280,16 +280,81 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Size (m²)</label>
-                                    <Input
-                                        type="number"
-                                        placeholder="e.g. 250"
-                                        value={newListing.size || ''}
-                                        onChange={e => setNewListing({ ...newListing, size: Number(e.target.value) })}
-                                        required
-                                    />
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Garage Type</label>
+                                    <select
+                                        value={newListing.garage || ''}
+                                        onChange={e => setNewListing({ ...newListing, garage: e.target.value })}
+                                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
+                                    >
+                                        <option value="">Select Garage</option>
+                                        <option value="None">None</option>
+                                        <option value="Single">Single</option>
+                                        <option value="Double">Double</option>
+                                        <option value="Triple">Triple</option>
+                                        <option value="4+ Cars">4+ Cars</option>
+                                        <option value="Reserved">Reserved/Parking Bay</option>
+                                    </select>
                                 </div>
                             </div>
+
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Swimming Pool</label>
+                                    <select
+                                        value={newListing.pool || 'none'}
+                                        onChange={e => setNewListing({ ...newListing, pool: e.target.value as any })}
+                                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
+                                    >
+                                        <option value="none">None</option>
+                                        <option value="private">Private</option>
+                                        <option value="communal">Communal</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Viewing Type</label>
+                                    <select
+                                        value={newListing.viewingType || 'appointment'}
+                                        onChange={e => setNewListing({ ...newListing, viewingType: e.target.value as any })}
+                                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
+                                    >
+                                        <option value="appointment">By Appointment</option>
+                                        <option value="on_show">On Show</option>
+                                    </select>
+                                </div>
+                                <div className="flex items-end">
+                                    <label className="flex items-center gap-2 cursor-pointer py-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={newListing.isPetFriendly}
+                                            onChange={e => setNewListing({ ...newListing, isPetFriendly: e.target.checked })}
+                                            className="rounded border-slate-300 text-brand-green w-4 h-4"
+                                        />
+                                        <span className="text-sm font-bold text-slate-700">Pet Friendly</span>
+                                    </label>
+                                </div>
+                                <div className="flex items-end">
+                                    <label className="flex items-center gap-2 cursor-pointer py-2">
+                                        <input
+                                            type="checkbox"
+                                            checked={newListing.isFeatured}
+                                            onChange={e => setNewListing({ ...newListing, isFeatured: e.target.checked })}
+                                            className="rounded border-slate-300 text-brand-green w-4 h-4"
+                                        />
+                                        <span className="text-sm font-bold text-slate-700">Featured</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            {newListing.viewingType === 'on_show' && (
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">On Show Schedule</label>
+                                    <Input
+                                        placeholder="e.g. Sunday 14:00 - 17:00"
+                                        value={newListing.onShowDate || ''}
+                                        onChange={e => setNewListing({ ...newListing, onShowDate: e.target.value })}
+                                    />
+                                </div>
+                            )}
 
                             <div>
                                 <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Status</label>
@@ -375,10 +440,10 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
                                         <div className="flex items-center gap-2 text-sm text-slate-500 mb-3">
                                             <MapPin size={14} /> {listing.address}
                                         </div>
-                                        <div className="flex items-center gap-4 text-sm text-slate-600 mb-4">
+                                        <div className="flex items-center gap-4 text-sm text-slate-600 mb-4 overflow-hidden">
                                             <span>{listing.beds} beds</span>
                                             <span>{listing.baths} baths</span>
-                                            <span>{listing.size}m²</span>
+                                            <span className="truncate">{listing.garage} garage</span>
                                         </div>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" className="flex-1">
