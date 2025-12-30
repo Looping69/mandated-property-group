@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { MapPin, BedDouble, Bath, Square, ChevronRight } from 'lucide-react';
+import { MapPin, BedDouble, Bath, Car, Waves, ChevronRight, PawPrint, Calendar } from 'lucide-react';
 import { Listing } from '../types';
 import { cn } from '../lib/utils';
 
@@ -75,9 +75,29 @@ export const PropertyCard: React.FC<PropertyCardProps> = ({ listing, onViewDetai
                         <Bath size={16} className="text-slate-400" />
                         <span className="text-sm">{listing.baths} <span className="hidden sm:inline">Baths</span></span>
                     </div>
-                    <div className="flex items-center gap-1.5 font-medium">
-                        <Square size={16} className="text-slate-400" />
-                        <span className="text-sm">{listing.size}m²</span>
+                    <div className="flex items-center gap-1.5 font-medium" title={`Pool: ${listing.pool}`}>
+                        <Waves size={16} className="text-slate-400" />
+                        <span className="text-sm capitalize">{listing.pool === 'none' ? 'No Pool' : listing.pool}</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 font-medium" title={`Garage: ${listing.garage}`}>
+                        <Car size={16} className="text-slate-400" />
+                        <span className="text-sm truncate max-w-[60px]">{listing.garage}</span>
+                    </div>
+                </div>
+
+                <div className="flex justify-between items-center mb-4 px-1">
+                    <div className="flex items-center gap-2">
+                        {listing.isPetFriendly && (
+                            <div className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-tighter">
+                                <PawPrint size={10} className="text-brand-green" /> Pet Friendly
+                            </div>
+                        )}
+                    </div>
+                    <div className={cn(
+                        "flex items-center gap-1 text-[10px] font-extrabold px-2 py-1 rounded-full uppercase tracking-tighter",
+                        listing.viewingType === 'on_show' ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
+                    )}>
+                        <Calendar size={10} /> {listing.viewingType === 'on_show' ? 'On Show' : 'By Appt'}
                     </div>
                 </div>
 

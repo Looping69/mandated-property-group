@@ -29,12 +29,15 @@ export interface Listing {
     description: string;
     beds: number;
     baths: number;
-    size: number;
+    garage: string;
+    pool: string;
     image: string;
     images: string[];
     agentId: string;
     isFeatured: boolean;
     status: string;
+    isPetFriendly: boolean;
+    viewingType: string;
     onShowDate?: string;
 }
 
@@ -67,12 +70,15 @@ export interface CreateListingParams {
     description: string;
     beds: number;
     baths: number;
-    size: number;
+    garage: string;
+    pool: string;
     image: string;
     images: string[];
     agentId: string;
     isFeatured: boolean;
     status: string;
+    isPetFriendly: boolean;
+    viewingType: string;
     onShowDate?: string;
 }
 
@@ -100,7 +106,7 @@ export const listProperties = api(
     async (): Promise<{ listings: Listing[] }> => {
         const listings: Listing[] = [];
         const rows = db.query`
-            SELECT id, title, price, address, description, beds, baths, size, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, on_show_date as "onShowDate"
+            SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", viewing_type as "viewingType", on_show_date as "onShowDate"
             FROM listings
         `;
         for await (const row of rows) {
@@ -112,12 +118,15 @@ export const listProperties = api(
                 description: row.description,
                 beds: row.beds,
                 baths: Number(row.baths),
-                size: row.size,
+                garage: row.garage || "None",
+                pool: row.pool || "none",
                 image: row.image,
                 images: row.images || [],
                 agentId: row.agentId,
                 isFeatured: row.isFeatured,
                 status: row.status,
+                isPetFriendly: row.isPetFriendly,
+                viewingType: row.viewingType || 'appointment',
                 onShowDate: row.onShowDate,
             });
         }
@@ -130,8 +139,8 @@ export const createProperty = api(
     async (params: CreateListingParams): Promise<Listing> => {
         const id = Math.random().toString(36).substring(2, 11);
         await db.exec`
-            INSERT INTO listings (id, title, price, address, description, beds, baths, size, image_url, images, agent_id, is_featured, status, on_show_date)
-            VALUES (${id}, ${params.title}, ${params.price}, ${params.address}, ${params.description}, ${params.beds}, ${params.baths}, ${params.size}, ${params.image}, ${params.images}, ${params.agentId}, ${params.isFeatured}, ${params.status}, ${params.onShowDate})
+            INSERT INTO listings (id, title, price, address, description, beds, baths, garage, pool, image_url, images, agent_id, is_featured, status, is_pet_friendly, viewing_type, on_show_date)
+            VALUES (${id}, ${params.title}, ${params.price}, ${params.address}, ${params.description}, ${params.beds}, ${params.baths}, ${params.garage}, ${params.pool}, ${params.image}, ${params.images}, ${params.agentId}, ${params.isFeatured}, ${params.status}, ${params.isPetFriendly}, ${params.viewingType}, ${params.onShowDate})
         `;
         return { ...params, id };
     }

@@ -27,7 +27,8 @@ export interface Listing {
   address: string;
   beds: number;
   baths: number;
-  size: number; // Square meters (m²)
+  garage: string; // e.g., "Single", "Double", "None"
+  pool: 'private' | 'communal' | 'none';
   image: string;
   images: string[];
   agentId: string;
@@ -35,7 +36,9 @@ export interface Listing {
   isFeatured?: boolean;
   status: ListingStatus;
   propertyType: 'House' | 'Apartment' | 'Townhouse' | 'Commercial' | 'Land';
-  onShowDate?: string; // e.g., "Sunday 14:00 - 17:00"
+  isPetFriendly: boolean;
+  viewingType: 'on_show' | 'appointment';
+  onShowDate?: string; // e.g., "Sunday 14:00 - 17:00" or ISO string
 }
 
 export interface TourStop {
