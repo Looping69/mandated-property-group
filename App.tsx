@@ -20,6 +20,9 @@ import { AgencyRegistration } from './components/AgencyRegistration';
 import { AgentRegistration } from './components/AgentRegistration';
 import { AgentDashboard } from './components/AgentDashboard';
 import { MaintenanceDashboard } from './components/MaintenanceDashboard';
+import { PrivacyPolicy } from './components/PrivacyPolicy';
+import { TermsOfService } from './components/TermsOfService';
+import { PopiaCompliance } from './components/PopiaCompliance';
 
 import { AppView, Listing, VirtualTour, Contractor, UserRole } from './types';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -27,6 +30,7 @@ import {
   MapPin, Search, ChevronRight, Users, ChevronLeft, Home
 } from 'lucide-react';
 import { AuthProvider, useUser, SignedIn } from './contexts/AuthContext';
+import { PROVINCES_CITIES } from './constants';
 
 const InnerApp = () => {
   const [currentView, setCurrentView] = useState<AppView>(AppView.HOME);
@@ -35,6 +39,8 @@ const InnerApp = () => {
   const [selectedContractor, setSelectedContractor] = useState<Contractor | null>(null);
   const [activeTour, setActiveTour] = useState<VirtualTour | null>(null);
   const [searchType, setSearchType] = useState<'properties' | 'agents'>('properties');
+  const [selectedProvince, setSelectedProvince] = useState<string>('');
+  const [selectedCity, setSelectedCity] = useState<string>('');
   const {
     listings, agents, virtualTours, inquiries, maintenanceRequests, contractors,
     updateAgent, addContractor, addListing, updateListing, deleteListing, updateMaintenanceRequest
@@ -155,6 +161,12 @@ const InnerApp = () => {
             onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
           />
         );
+      case AppView.PRIVACY_POLICY:
+        return <PrivacyPolicy />;
+      case AppView.TERMS_OF_SERVICE:
+        return <TermsOfService />;
+      case AppView.POPIA_COMPLIANCE:
+        return <PopiaCompliance />;
       case AppView.AGENT_DASHBOARD: {
         const currentAgent = agents.find(a => a.id === agentId) || agents[0]; // Fallback to first agent
         return (
@@ -234,26 +246,48 @@ const InnerApp = () => {
                       onClick={() => setSearchType('agents')}
                       className={`text-lg font-bold pb-4 -mb-4 transition-colors ${searchType === 'agents' ? 'text-brand-green border-b-2 border-brand-green' : 'text-slate-400 hover:text-slate-600'}`}
                     >
-                      Find Agents
+                      Find Top Area Agents
                     </button>
                   </div>
 
                   {searchType === 'properties' ? (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-2">
-                      <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>Property Type</option><option>House</option><option>Apartment</option></select></div>
-                      <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>Province</option><option>Eastern Cape</option><option>Free State</option><option>Gauteng</option><option>KwaZulu-Natal</option><option>Limpopo</option><option>Mpumalanga</option><option>Northern Cape</option><option>North West</option><option>Western Cape</option></select></div>
-                      <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>City</option><option>Cape Town</option></select></div>
+                      <div className="relative"><select className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"><option>Property Type</option><option>House</option><option>Apartment</option><option>Townhouse</option><option>Commercial Property</option></select></div>
+                      <div className="relative">
+                        <select
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"
+                          value={selectedProvince}
+                          onChange={(e) => {
+                            setSelectedProvince(e.target.value);
+                            setSelectedCity('');
+                          }}
+                        >
+                          <option value="">Select Province</option>
+                          {Object.keys(PROVINCES_CITIES).map(p => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                      </div>
+                      <div className="relative">
+                        <select
+                          className="w-full p-3 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none cursor-pointer"
+                          value={selectedCity}
+                          onChange={(e) => setSelectedCity(e.target.value)}
+                          disabled={!selectedProvince}
+                        >
+                          <option value="">{selectedProvince ? 'Select City' : 'Select Province First'}</option>
+                          {selectedProvince && PROVINCES_CITIES[selectedProvince].map(c => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                      </div>
                       <div className="relative"><div className="absolute left-3 top-3 text-slate-400"><MapPin size={20} /></div><input type="text" placeholder="Area or Suburb" className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none" /></div>
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 animate-in fade-in slide-in-from-bottom-2">
                       <div className="relative">
                         <Users className="absolute left-3 top-3 text-slate-400" size={20} />
-                        <input type="text" placeholder="Agent Name" className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none" />
+                        <input type="text" placeholder="Search by Agent Name" className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none" />
                       </div>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 text-slate-400" size={20} />
-                        <input type="text" placeholder="Area or City" className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none" />
+                        <input type="text" placeholder="Enter Area to find Top Agents" className="w-full p-3 pl-10 bg-slate-50 border border-slate-200 rounded-lg text-slate-900 font-bold outline-none" />
                       </div>
                     </div>
                   )}
@@ -263,7 +297,7 @@ const InnerApp = () => {
                     className="w-full bg-brand-green hover:bg-green-700 text-white font-bold py-4 rounded-lg shadow-lg transition-colors flex items-center justify-center text-lg uppercase tracking-wider"
                   >
                     <Search size={20} className="mr-2" />
-                    {searchType === 'properties' ? 'Search Properties' : 'Search Agents'}
+                    {searchType === 'properties' ? 'Search Properties' : 'Find Top Area Agents'}
                   </button>
                 </div>
               </div>
