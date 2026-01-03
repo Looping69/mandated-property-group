@@ -201,10 +201,10 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
             <div>
               <h4 className="font-bold text-white mb-6">Our Services</h4>
               <ul className="space-y-3 text-sm text-slate-300">
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.LISTINGS)}>On Show Properties</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.AGENTS)}>Top Area Agents</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.MAINTENANCE)}>Maintenance Contractors</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.CONVEYANCER)}>Conveyancing Services</li>
+                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_SHOW_PROPERTY)}>On Show Property</li>
+                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_TOP_AREA_AGENT)}>Top Area Agent</li>
+                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_MAINTENANCE)}>Maintenance Contractors</li>
+                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_CONVEYANCING)}>Conveyancing Services</li>
                 <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.ADMIN)}>Partner Portal</li>
               </ul>
             </div>

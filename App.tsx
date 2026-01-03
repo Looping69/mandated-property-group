@@ -23,6 +23,10 @@ import { MaintenanceDashboard } from './components/MaintenanceDashboard';
 import { PrivacyPolicy } from './components/PrivacyPolicy';
 import { TermsOfService } from './components/TermsOfService';
 import { PopiaCompliance } from './components/PopiaCompliance';
+import { ServiceShowProperty } from './components/ServiceShowProperty';
+import { ServiceTopAreaAgent } from './components/ServiceTopAreaAgent';
+import { ServiceMaintenance } from './components/ServiceMaintenance';
+import { ServiceConveyancing } from './components/ServiceConveyancing';
 
 import { AppView, Listing, VirtualTour, Contractor, UserRole } from './types';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -167,6 +171,14 @@ const InnerApp = () => {
         return <TermsOfService />;
       case AppView.POPIA_COMPLIANCE:
         return <PopiaCompliance />;
+      case AppView.SERVICE_SHOW_PROPERTY:
+        return <ServiceShowProperty />;
+      case AppView.SERVICE_TOP_AREA_AGENT:
+        return <ServiceTopAreaAgent />;
+      case AppView.SERVICE_MAINTENANCE:
+        return <ServiceMaintenance />;
+      case AppView.SERVICE_CONVEYANCING:
+        return <ServiceConveyancing />;
       case AppView.AGENT_DASHBOARD: {
         const currentAgent = agents.find(a => a.id === agentId) || agents[0]; // Fallback to first agent
         return (
