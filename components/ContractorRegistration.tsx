@@ -9,6 +9,8 @@ import {
 import { Card, Input } from './admin/Shared';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
+import { ClerkSignUpStep } from './ClerkSignUpStep';
+import { useUser } from '../contexts/AuthContext';
 
 interface ContractorRegistrationProps {
     onSubmit: (contractor: any) => Promise<void>;
@@ -50,6 +52,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
     onCancel,
     onDashboardRedirect
 }) => {
+    const { isSignedIn } = useUser();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -69,6 +72,37 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         license: false
     });
 
+    useEffect(() => {
+        const autoSubmit = async () => {
+            if (step === 4 && isSignedIn) {
+                // Auto-submit if already signed in
+                try {
+                    const contractorData = {
+                        name: formData.name,
+                        trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
+                        location: formData.location,
+                        phone: formData.phone,
+                        email: formData.email,
+                        hourlyRate: Number(formData.hourlyRate),
+                        description: formData.description,
+                        image: formData.image || 'https://images.unsplash.com/photo-1504253163759-c23fccaebb55?q=80&w=400',
+                        rating: 4.0,
+                        isVerified: false
+                    };
+
+                    await onSubmit(contractorData);
+                    setStep(5);
+                } catch (error) {
+                    console.error('Registration failed:', error);
+                    alert('Registration failed. Please try again.');
+                    // Optionally go back
+                    setStep(3);
+                }
+            }
+        };
+        autoSubmit();
+    }, [step, isSignedIn]);
+
     const updateField = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -85,6 +119,20 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // If Enter is pressed on early steps, move to next step instead of submitting
+        if (step === 1) {
+            if (isStep1Valid()) setStep(2);
+            return;
+        }
+        if (step === 2) {
+            if (isStep2Valid()) setStep(3);
+            return;
+        }
+        if (step === 3 && !isStep3Valid()) {
+            return;
+        }
+
         setIsSubmitting(true);
 
         try {
@@ -119,22 +167,26 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         return formData.hourlyRate && formData.description;
     };
 
+    const isStep3Valid = () => {
+        return !!formData.insurance && !!formData.license;
+    };
+
     const renderStepIndicator = () => (
         <div className="flex items-center justify-center mb-8">
             <div className="flex items-center gap-4">
-                {[1, 2, 3].map(num => (
+                {[1, 2, 3, 4].map(num => (
                     <React.Fragment key={num}>
                         <div className={cn(
-                            "flex items-center justify-center w-12 h-12 rounded-full font-bold transition-all",
+                            "flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all text-sm",
                             step >= num
                                 ? "bg-brand-green text-white shadow-lg"
                                 : "bg-slate-200 text-slate-400"
                         )}>
-                            {step > num ? <CheckCircle size={20} /> : num}
+                            {step > num ? <CheckCircle size={18} /> : num}
                         </div>
-                        {num < 3 && (
+                        {num < 4 && (
                             <div className={cn(
-                                "w-16 h-1 transition-all",
+                                "w-8 h-1 transition-all",
                                 step > num ? "bg-brand-green" : "bg-slate-200"
                             )} />
                         )}
@@ -359,7 +411,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                         className="w-5 h-5 rounded text-brand-green focus:ring-brand-green"
                     />
                     <div>
-                        <p className="font-bold text-slate-900">Liability Insurance</p>
+                        <p className="font-bold text-slate-900">Liability Insurance *</p>
                         <p className="text-xs text-slate-500">I carry professional liability insurance</p>
                     </div>
                 </label>
@@ -372,7 +424,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                         className="w-5 h-5 rounded text-brand-green focus:ring-brand-green"
                     />
                     <div>
-                        <p className="font-bold text-slate-900">Licensed & Registered</p>
+                        <p className="font-bold text-slate-900">Licensed & Registered *</p>
                         <p className="text-xs text-slate-500">I am licensed with relevant authorities</p>
                     </div>
                 </label>
@@ -452,15 +504,63 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
 
                 {/* Form Card */}
                 <Card className="p-8 md:p-12 shadow-xl">
-                    {step < 4 && renderStepIndicator()}
+                    {step < 5 && renderStepIndicator()}
 
                     <form onSubmit={handleSubmit}>
                         {step === 1 && renderStep1()}
                         {step === 2 && renderStep2()}
                         {step === 3 && renderStep3()}
-                        {step === 4 && renderStep4()}
+                        {step === 4 && (
+                            isSignedIn ? (
+                                <div className="text-center py-12">
+                                    <h3 className="text-xl font-bold mb-4">Submitting Application...</h3>
+                                    <p className="text-slate-500">Please wait while we process your registration.</p>
+                                </div>
+                            ) : (
+                                <ClerkSignUpStep
+                                    role="CONTRACTOR"
+                                    registrationData={{
+                                        name: formData.name,
+                                        trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
+                                        location: formData.location,
+                                        phone: formData.phone,
+                                        email: formData.email,
+                                        hourlyRate: Number(formData.hourlyRate),
+                                        description: formData.description,
+                                        yearsExperience: formData.yearsExperience,
+                                        certifications: formData.certifications,
+                                        emergencyService: formData.emergencyService,
+                                        insurance: formData.insurance,
+                                        license: formData.license,
+                                        image: formData.image,
+                                    }}
+                                    onSuccess={async () => {
+                                        // Save to backend after Clerk signup completes
+                                        try {
+                                            await onSubmit({
+                                                name: formData.name,
+                                                trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
+                                                location: formData.location,
+                                                phone: formData.phone,
+                                                email: formData.email,
+                                                hourlyRate: Number(formData.hourlyRate),
+                                                description: formData.description,
+                                                image: formData.image || 'https://images.unsplash.com/photo-1504253163759-c23fccaebb55?q=80&w=400',
+                                                rating: 4.0,
+                                                isVerified: false
+                                            });
+                                        } catch (error) {
+                                            console.error('Failed to save contractor data:', error);
+                                        }
+                                        setStep(5); // Move to Success Step
+                                    }}
+                                    onBack={() => setStep(3)}
+                                />
+                            )
+                        )}
+                        {step === 5 && renderStep4()}
 
-                        {/* Navigation Buttons */}
+                        {/* Navigation Buttons - Only show for steps 1-3 */}
                         {step < 4 && (
                             <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
                                 {step > 1 && (
@@ -485,19 +585,19 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                                     </Button>
                                 ) : (
                                     <Button
-                                        type="submit"
+                                        type="button"
                                         variant="brand"
-                                        disabled={isSubmitting}
+                                        onClick={() => setStep(4)}
+                                        disabled={!isStep3Valid()}
                                         className="flex-1"
                                     >
-                                        {isSubmitting ? 'Submitting...' : 'Submit Registration'}
-                                        {!isSubmitting && <CheckCircle size={16} className="ml-2" />}
+                                        Continue to Account Setup <ArrowRight size={16} className="ml-2" />
                                     </Button>
                                 )}
                             </div>
                         )}
 
-                        {onCancel && step < 4 && (
+                        {onCancel && step < 5 && step !== 4 && (
                             <button
                                 type="button"
                                 onClick={onCancel}
@@ -510,7 +610,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 </Card>
 
                 {/* Trust Indicators */}
-                {step < 4 && (
+                {step < 5 && step !== 4 && (
                     <div className="mt-8 grid grid-cols-3 gap-4 text-center">
                         <div className="bg-white rounded-lg p-4 shadow-sm">
                             <p className="text-2xl font-bold text-brand-green">500+</p>

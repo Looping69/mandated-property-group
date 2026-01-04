@@ -1,0 +1,120 @@
+import { apiRequest } from './apiConfig';
+
+// --- Types ---
+
+export type UserRole = 'AGENT' | 'AGENCY' | 'CONTRACTOR';
+
+export interface User {
+    id: string;
+    clerkId: string;
+    email: string;
+    role: UserRole;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    imageUrl?: string;
+    agentId?: string;
+    contractorId?: string;
+    isVerified: boolean;
+    isActive: boolean;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface CreateUserParams {
+    clerkId: string;
+    email: string;
+    role: UserRole;
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    imageUrl?: string;
+    agentId?: string;
+    contractorId?: string;
+}
+
+export interface UpdateUserParams {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    imageUrl?: string;
+    isVerified?: boolean;
+    isActive?: boolean;
+}
+
+// Response types matching Encore backend
+interface UserResponse {
+    user?: User;
+}
+
+interface UsersListResponse {
+    users: User[];
+}
+
+interface SuccessResponse {
+    success: boolean;
+}
+
+// --- Service ---
+
+export const userService = {
+    // Get user by Clerk ID (typically called after sign-in)
+    async getByClerkId(clerkId: string): Promise<User | null> {
+        const response = await apiRequest<UserResponse>(`/api/users/clerk/${clerkId}`);
+        return response.user || null;
+    },
+
+    // Get user by email
+    async getByEmail(email: string): Promise<User | null> {
+        const response = await apiRequest<UserResponse>(`/api/users/email/${encodeURIComponent(email)}`);
+        return response.user || null;
+    },
+
+    // Create user (called after Clerk signup to sync user data)
+    async create(params: CreateUserParams): Promise<User> {
+        return apiRequest<User>('/api/users', {
+            method: 'POST',
+            body: JSON.stringify(params),
+        });
+    },
+
+    // Update user profile
+    async update(id: string, updates: UpdateUserParams): Promise<SuccessResponse> {
+        return apiRequest<SuccessResponse>(`/api/users/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(updates),
+        });
+    },
+
+    // Get all users (admin only)
+    async list(): Promise<User[]> {
+        const response = await apiRequest<UsersListResponse>('/api/users');
+        return response.users || [];
+    },
+
+    // Get users by role
+    async getByRole(role: UserRole): Promise<User[]> {
+        const response = await apiRequest<UsersListResponse>(`/api/users/role/${role}`);
+        return response.users || [];
+    },
+
+    // Sync user after Clerk signup - creates backend record with role data
+    async syncFromClerk(params: {
+        clerkId: string;
+        email: string;
+        role: UserRole;
+        firstName?: string;
+        lastName?: string;
+        phone?: string;
+        imageUrl?: string;
+    }): Promise<User> {
+        // First check if user already exists
+        const existing = await this.getByClerkId(params.clerkId);
+        if (existing) {
+            return existing;
+        }
+
+        // Create new user in backend
+        return this.create(params);
+    },
+};

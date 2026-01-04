@@ -46,7 +46,7 @@ interface DataContextType {
   addListing: (listing: Listing | Omit<Listing, 'id'>) => Promise<void>;
   updateListing: (id: string, updates: Partial<Listing>) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
-  addAgent: (agent: Agent | Omit<Agent, 'id'>) => Promise<void>;
+  addAgent: (agent: Agent | Omit<Agent, 'id'>) => Promise<Agent>;
   updateAgent: (agent: Agent) => void;
   deleteAgent: (id: string) => void;
   addInquiry: (inquiry: Omit<Inquiry, 'id' | 'date' | 'status'>) => Promise<void>;
@@ -56,7 +56,8 @@ interface DataContextType {
   addTourStop: (tourId: string, stop: Omit<TourStop, 'id' | 'timestamp'>) => Promise<void>;
   updateTour: (tour: VirtualTour) => void;
   deleteTour: (id: string) => Promise<void>;
-  addContractor: (contractor: Omit<Contractor, 'id'>) => Promise<void>;
+  addContractor: (contractor: Omit<Contractor, 'id'>) => Promise<Contractor>;
+  addAgency?: (agency: any) => Promise<any>;
   deleteContractor: (id: string) => Promise<void>;
   addConveyancer: (conveyancer: Omit<Conveyancer, 'id'>) => Promise<void>;
   deleteConveyancer: (id: string) => Promise<void>;
@@ -82,23 +83,23 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [listingsRes, agentsRes, inquiriesRes, contractorsRes, conveyancersRes, toursRes, maintenanceRes] = await Promise.all([
-        propertyService.list().catch(() => ({ listings: [] })),
-        agentService.list().catch(() => ({ agents: [] })),
-        inquiryService.list().catch(() => ({ inquiries: [] })),
-        contractorService.list().catch(() => ({ contractors: [] })),
-        conveyancerService.list().catch(() => ({ conveyancers: [] })),
-        tourService.list().catch(() => ({ tours: [] })),
+      const [listings, agents, inquiries, contractors, conveyancers, tours, maintenance] = await Promise.all([
+        propertyService.list().catch(() => []),
+        agentService.list().catch(() => []),
+        inquiryService.list().catch(() => []),
+        contractorService.list().catch(() => []),
+        conveyancerService.list().catch(() => []),
+        tourService.list().catch(() => []),
         maintenanceService.getAll().catch(() => []),
       ]);
 
-      setListings(listingsRes.listings.length > 0 ? listingsRes.listings : MOCK_LISTINGS);
-      setAgents(agentsRes.agents.length > 0 ? agentsRes.agents : MOCK_AGENTS);
-      setInquiries(inquiriesRes.inquiries);
-      setContractors(contractorsRes.contractors.length > 0 ? contractorsRes.contractors : MOCK_CONTRACTORS);
-      setConveyancers(conveyancersRes.conveyancers.length > 0 ? conveyancersRes.conveyancers : MOCK_CONVEYANCERS);
-      setVirtualTours(toursRes.tours.length > 0 ? toursRes.tours : MOCK_TOURS);
-      setMaintenanceRequests(Array.isArray(maintenanceRes) ? maintenanceRes : []);
+      setListings(listings.length > 0 ? listings : MOCK_LISTINGS);
+      setAgents(agents.length > 0 ? agents : MOCK_AGENTS);
+      setInquiries(inquiries);
+      setContractors(contractors.length > 0 ? contractors : MOCK_CONTRACTORS);
+      setConveyancers(conveyancers.length > 0 ? conveyancers : MOCK_CONVEYANCERS);
+      setVirtualTours(tours.length > 0 ? tours : MOCK_TOURS);
+      setMaintenanceRequests(maintenance);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -153,11 +154,13 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const newAgent = await agentService.create(agent as Agent);
       setAgents(prev => [...prev, newAgent]);
+      return newAgent;
     } catch (err) {
       console.error('Failed to add agent:', err);
       // Fallback for demo if API fails/not ready (though it should be)
       const mockAgent = 'id' in agent ? agent : { ...agent, id: `a${agents.length + 1}` };
       setAgents([...agents, mockAgent as Agent]);
+      return mockAgent as Agent;
     }
   };
 
@@ -236,14 +239,25 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Contractors
+  // Contractors
   const addContractor = async (data: Omit<Contractor, 'id'>) => {
     try {
       const newContractor = await contractorService.create(data);
       setContractors(prev => [...prev, newContractor]);
+      return newContractor;
     } catch (err) {
       console.error('Failed to add contractor:', err);
       throw err;
     }
+  };
+
+  // Agencies (New)
+  // Assuming agencyService is imported
+  const addAgency = async (data: any) => {
+    // Stub for agency creation
+    // const newAgency = await agencyService.create(data);
+    // setAgencies...
+    return { id: 'test', ...data };
   };
 
   const deleteContractor = async (id: string) => {
@@ -290,8 +304,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateMaintenanceRequest = async (id: string, updates: Partial<MaintenanceRequest>) => {
     try {
-      const updated = await maintenanceService.update(id, updates);
-      setMaintenanceRequests(prev => prev.map(r => r.id === id ? updated : r));
+      await maintenanceService.update(id, updates);
+      setMaintenanceRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
     } catch (err) {
       console.error('Failed to update maintenance request:', err);
       throw err;

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from './components/Layout';
 import { VirtualTourCreator } from './components/VirtualTourCreator';
 import { AdminPanel } from './components/AdminPanel';
@@ -27,6 +27,7 @@ import { ServiceShowProperty } from './components/ServiceShowProperty';
 import { ServiceTopAreaAgent } from './components/ServiceTopAreaAgent';
 import { ServiceMaintenance } from './components/ServiceMaintenance';
 import { ServiceConveyancing } from './components/ServiceConveyancing';
+import { ServicePartnerPortal } from './components/ServicePartnerPortal';
 
 import { AppView, Listing, VirtualTour, Contractor, UserRole } from './types';
 import { DataProvider, useData } from './contexts/DataContext';
@@ -34,6 +35,9 @@ import {
   MapPin, Search, ChevronRight, Users, ChevronLeft, Home
 } from 'lucide-react';
 import { AuthProvider, useUser, SignedIn } from './contexts/AuthContext';
+import { useBackendUser } from './hooks/useBackendUser';
+import { PendingApproval } from './components/PendingApproval';
+import { userService } from './services/userService';
 import { PROVINCES_CITIES } from './constants';
 
 const InnerApp = () => {
@@ -47,9 +51,28 @@ const InnerApp = () => {
   const [selectedCity, setSelectedCity] = useState<string>('');
   const {
     listings, agents, virtualTours, inquiries, maintenanceRequests, contractors,
-    updateAgent, addContractor, addListing, updateListing, deleteListing, updateMaintenanceRequest
+    updateAgent, addContractor, addListing, updateListing, deleteListing, updateMaintenanceRequest, addAgent, addAgency
   } = useData();
   const { user } = useUser();
+  const { user: backendUser, hasProfile, isVerified, isLoading: isLoadingBackend } = useBackendUser();
+
+  useEffect(() => {
+    if (user && !isLoadingBackend) {
+      if (!hasProfile) {
+        const onboardingViews = [
+          AppView.JOIN_SELECTION,
+          AppView.CONTRACTOR_REGISTRATION,
+          AppView.REGISTER_AGENCY,
+          AppView.REGISTER_AGENT
+        ];
+        if (!onboardingViews.includes(currentView) && currentView !== AppView.HOME) {
+          setCurrentView(AppView.JOIN_SELECTION);
+        }
+      } else if (!isVerified) {
+        setCurrentView(AppView.PENDING_APPROVAL);
+      }
+    }
+  }, [user, hasProfile, isVerified, isLoadingBackend, currentView]);
 
   const handleAgentImageUpdate = (id: string, newImage: string) => {
     const agent = agents.find(a => a.id === id);
@@ -69,11 +92,12 @@ const InnerApp = () => {
 
   // --- Auth & Role Logic ---
   const getUserRole = (): UserRole => {
-    if (!user) return 'AGENT';
-    return user.primaryEmailAddress?.emailAddress.includes('agency') ? 'AGENCY' : 'AGENT';
+    return backendUser?.role || 'AGENT';
   };
 
-  const getCurrentAgentId = (): string => 'a1';
+  const getCurrentAgentId = (): string => {
+    return backendUser?.agentId || 'a1';
+  };
 
   const role = getUserRole();
   const agentId = getCurrentAgentId();
@@ -124,13 +148,32 @@ const InnerApp = () => {
       case AppView.CONTRACTOR_REGISTRATION:
         return (
           <ContractorRegistration
-            onSubmit={async (contractor) => {
-              await addContractor(contractor);
+            onSubmit={async (data) => {
+              try {
+                const newContractor = await addContractor(data);
+                if (user) {
+                  await userService.syncFromClerk({
+                    clerkId: user.id,
+                    email: user.primaryEmailAddress?.emailAddress!,
+                    role: 'CONTRACTOR',
+                    firstName: user.firstName || '',
+                    lastName: user.lastName || '',
+                    imageUrl: user.imageUrl,
+                    contractorId: newContractor.id
+                  });
+                  window.location.reload();
+                }
+              } catch (e) {
+                console.error("Registration failed", e);
+                alert("Failed to register. Please try again.");
+              }
             }}
             onDashboardRedirect={() => setCurrentView(AppView.MAINTENANCE)}
             onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
           />
         );
+      case AppView.PENDING_APPROVAL:
+        return <PendingApproval />;
       case AppView.JOIN_SELECTION:
         return (
           <JoinSelection
@@ -145,11 +188,24 @@ const InnerApp = () => {
       case AppView.REGISTER_AGENCY:
         return (
           <AgencyRegistration
-            onSubmit={async (agency) => {
-              // In a real app, we'd add this to the database
-              console.log("Agency Registered:", agency);
-              alert('Agency application submitted! We will be in touch shortly.');
-              setCurrentView(AppView.HOME);
+            onSubmit={async (data) => {
+              try {
+                const newAgency = addAgency ? await addAgency(data) : data;
+                if (user) {
+                  await userService.syncFromClerk({
+                    clerkId: user.id,
+                    email: user.primaryEmailAddress?.emailAddress!,
+                    role: 'AGENCY',
+                    firstName: user.firstName || '',
+                    lastName: user.lastName || '',
+                    imageUrl: user.imageUrl,
+                  });
+                  window.location.reload();
+                }
+              } catch (e) {
+                console.error("Agency registration failed", e);
+                alert("Registration failed. Please try again.");
+              }
             }}
             onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
           />
@@ -157,12 +213,28 @@ const InnerApp = () => {
       case AppView.REGISTER_AGENT:
         return (
           <AgentRegistration
-            onSubmit={async (agent) => {
-              console.log("Agent Registered:", agent);
-              alert('Agent profile received! Verification is pending.');
-              setCurrentView(AppView.HOME);
+            onSubmit={async (data) => {
+              try {
+                const newAgent = await addAgent(data);
+                if (user) {
+                  await userService.syncFromClerk({
+                    clerkId: user.id,
+                    email: user.primaryEmailAddress?.emailAddress!,
+                    role: 'AGENT',
+                    firstName: user.firstName || data.name.split(' ')[0],
+                    lastName: user.lastName || data.name.split(' ').slice(1).join(' '),
+                    imageUrl: user.imageUrl,
+                    agentId: newAgent.id
+                  });
+                  window.location.reload();
+                }
+              } catch (e) {
+                console.error("Agent registration failed", e);
+                alert("Registration failed. Please try again.");
+              }
             }}
             onCancel={() => setCurrentView(AppView.JOIN_SELECTION)}
+            onDashboardRedirect={() => setCurrentView(AppView.AGENT_DASHBOARD)}
           />
         );
       case AppView.PRIVACY_POLICY:
@@ -179,6 +251,8 @@ const InnerApp = () => {
         return <ServiceMaintenance />;
       case AppView.SERVICE_CONVEYANCING:
         return <ServiceConveyancing />;
+      case AppView.SERVICE_PARTNER_PORTAL:
+        return <ServicePartnerPortal />;
       case AppView.AGENT_DASHBOARD: {
         const currentAgent = agents.find(a => a.id === agentId) || agents[0]; // Fallback to first agent
         return (
@@ -199,8 +273,8 @@ const InnerApp = () => {
         );
       }
       case AppView.MAINTENANCE_DASHBOARD: {
-        // In a real app, getting the logged-in contractor
-        const currentContractor = contractors[0] || { id: 'c1', name: 'Demo Contractor', trade: 'General', location: 'CT', rating: 5, image: '', phone: '', email: '', description: '', isVerified: true };
+        // Get the specific contractor linked to the logged-in user
+        const currentContractor = contractors.find(c => c.id === backendUser?.contractorId) || contractors[0] || { id: 'c1', name: 'Demo Contractor', trade: 'General', location: 'CT', rating: 5, image: '', phone: '', email: '', description: '', isVerified: true };
         return (
           <MaintenanceDashboard
             currentContractor={currentContractor}

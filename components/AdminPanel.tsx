@@ -70,7 +70,6 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     address: '',
     beds: 0,
     baths: 0,
-    size: 0,
     image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80',
     description: '',
     isFeatured: false,
@@ -130,7 +129,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     await addListing(newListing as Listing);
     setIsAddingListing(false);
     setNewListing({
-      title: '', price: 0, address: '', beds: 0, baths: 0, size: 0,
+      title: '', price: 0, address: '', beds: 0, baths: 0,
       image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80',
       description: '', isFeatured: false, status: 'active', agentId: currentAgentId || (agents[0]?.id || '')
     });

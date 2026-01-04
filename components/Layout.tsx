@@ -205,7 +205,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                 <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_TOP_AREA_AGENT)}>Top Area Agent</li>
                 <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_MAINTENANCE)}>Maintenance Contractors</li>
                 <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_CONVEYANCING)}>Conveyancing Services</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.ADMIN)}>Partner Portal</li>
+                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_PARTNER_PORTAL)}>Partner Portal</li>
               </ul>
             </div>
 

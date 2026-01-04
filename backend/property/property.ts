@@ -8,6 +8,9 @@ import "./conveyancers";
 import "./tours";
 import "./ai";
 import "./agents";
+import "./maintenance";
+import "./users";
+import "./agencies";
 
 // Define a Postgres database named 'property'
 export const db = new SQLDatabase("property", {
