@@ -25,7 +25,7 @@ export interface CreateAgentParams {
 // --- API Endpoints ---
 
 export const listAgents = api(
-    { expose: true, method: "GET", path: "/agents" },
+    { expose: true, method: "GET", path: "/api/agents" },
     async (): Promise<{ agents: Agent[] }> => {
         const agents: Agent[] = [];
         const rows = db.query`SELECT id, name, email, phone FROM agents`;
@@ -45,9 +45,9 @@ export const listAgents = api(
 );
 
 export const createAgent = api(
-    { expose: true, method: "POST", path: "/agents" },
+    { expose: true, auth: true, method: "POST", path: "/api/agents" },
     async (params: CreateAgentParams): Promise<Agent> => {
-        const id = `a${Math.random().toString(36).substring(2, 9)}`;
+        const id = `a_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
         await db.exec`
             INSERT INTO agents (id, name, email, phone)
             VALUES (${id}, ${params.name}, ${params.email}, ${params.phone})
@@ -57,7 +57,7 @@ export const createAgent = api(
 );
 
 export const deleteAgent = api(
-    { expose: true, method: "DELETE", path: "/agents/:id" },
+    { expose: true, auth: true, method: "DELETE", path: "/api/agents/:id" },
     async ({ id }: { id: string }): Promise<void> => {
         await db.exec`DELETE FROM agents WHERE id = ${id}`;
     }

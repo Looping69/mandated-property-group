@@ -1,8 +1,9 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@clerk/clerk-react';
 import { Agent, Listing, Inquiry, Review, VirtualTour, Contractor, Conveyancer, TourStop, MaintenanceRequest } from '../types';
-import { AGENTS as MOCK_AGENTS, LISTINGS as MOCK_LISTINGS } from '../constants';
+import { MOCK_AGENTS, MOCK_LISTINGS, MOCK_CONTRACTORS, MOCK_CONVEYANCERS, MOCK_TOURS } from '../mock/data';
 import { propertyService } from '../services/propertyService';
 import { agentService } from '../services/agentService';
 import { inquiryService } from '../services/inquiryService';
@@ -11,27 +12,8 @@ import { conveyancerService } from '../services/conveyancerService';
 import { tourService } from '../services/tourService';
 import { maintenanceService } from '../services/maintenanceService';
 
-// Mock data for contractors and conveyancers
-const MOCK_CONTRACTORS: Contractor[] = [
-  { id: 'c1', name: "BuildRight Construction", trade: "General Building", location: "Johannesburg", rating: 4.7, image: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=400", phone: "+27 11 555 1234", email: "info@buildright.co.za", description: "Specializing in luxury home renovations.", isVerified: true, hourlyRate: 850 },
-  { id: 'c2', name: "FlowMaster Plumbing", trade: "Plumbing", location: "Durban", rating: 4.9, image: "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?q=80&w=400", phone: "+27 31 555 5678", email: "support@flowmaster.co.za", description: "24/7 Emergency plumbing services.", isVerified: true, hourlyRate: 650 },
-  { id: 'c3', name: "Spark Electrical", trade: "Electrical", location: "Cape Town", rating: 4.8, image: "https://images.unsplash.com/photo-1621905251189-08b45d6a269e?q=80&w=400", phone: "+27 21 555 9012", email: "help@sparkelec.co.za", description: "Smart home integration specialists.", isVerified: true, hourlyRate: 750 },
-];
 
-const MOCK_CONVEYANCERS: Conveyancer[] = [
-  { id: 'cv1', name: "Norton & Associates", specialist: "Property Transfers", location: "Cape Town", rating: 5, image: "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?q=80&w=400", website: "https://www.nortoninc.co.za", isVerified: true, phone: "+27 21 555 8888" },
-  { id: 'cv2', name: "Prestige Legal", specialist: "Bond Registrations", location: "Sandton", rating: 4.8, image: "https://images.unsplash.com/photo-1497366216548-37526070297c?q=80&w=400", website: "https://www.prestigelegal.co.za", isVerified: true, phone: "+27 11 555 9999" },
-];
 
-const MOCK_TOURS: VirtualTour[] = [
-  {
-    id: 'vt1', title: 'Clifton Obsidian Walkthrough', agentId: 'a1', listingId: 'l1', date: new Date().toISOString(), status: 'published',
-    stops: [
-      { id: 's1', title: 'Entrance Hall', description: 'A grand double-volume entrance featuring imported Italian marble.', image: 'https://picsum.photos/id/164/800/600', timestamp: Date.now() },
-      { id: 's2', title: 'Living Area', description: 'Open plan living space with ocean views.', image: 'https://picsum.photos/id/188/800/600', timestamp: Date.now() }
-    ]
-  }
-];
 
 interface DataContextType {
   agents: Agent[];
@@ -70,6 +52,7 @@ interface DataContextType {
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { getToken, isSignedIn } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
@@ -80,17 +63,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     try {
+      const token = isSignedIn ? await getToken() : undefined;
       const [listings, agents, inquiries, contractors, conveyancers, tours, maintenance] = await Promise.all([
-        propertyService.list().catch(() => []),
-        agentService.list().catch(() => []),
-        inquiryService.list().catch(() => []),
-        contractorService.list().catch(() => []),
-        conveyancerService.list().catch(() => []),
-        tourService.list().catch(() => []),
-        maintenanceService.getAll().catch(() => []),
+        propertyService.list(token || undefined).catch(() => []),
+        agentService.list(token || undefined).catch(() => []),
+        inquiryService.list(token || undefined).catch(() => []),
+        contractorService.list(token || undefined).catch(() => []),
+        conveyancerService.list(token || undefined).catch(() => []),
+        tourService.list(token || undefined).catch(() => []),
+        maintenanceService.getAll(token || undefined).catch(() => []),
       ]);
 
       setListings(listings.length > 0 ? listings : MOCK_LISTINGS);
@@ -112,16 +96,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [getToken, isSignedIn]);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   // Listings
   const addListing = async (listing: Listing | Omit<Listing, 'id'>) => {
     try {
-      const newListing = await propertyService.create(listing as Listing);
+      const token = await getToken();
+      const newListing = await propertyService.create(listing as Listing, token || undefined);
       setListings(prev => [...prev, newListing]);
     } catch (err) {
       console.error('Failed to create listing:', err);
@@ -131,7 +116,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateListing = async (id: string, updates: Partial<Listing>) => {
     try {
-      const updated = await propertyService.update(id, updates);
+      const token = await getToken();
+      const updated = await propertyService.update(id, updates, token || undefined);
       setListings(prev => prev.map(l => l.id === id ? { ...l, ...updated } : l));
     } catch (err) {
       console.error('Failed to update listing:', err);
@@ -141,7 +127,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteListing = async (id: string) => {
     try {
-      await propertyService.delete(id);
+      const token = await getToken();
+      await propertyService.delete(id, token || undefined);
       setListings(prev => prev.filter(l => l.id !== id));
     } catch (err) {
       console.error('Failed to delete listing:', err);
@@ -152,13 +139,15 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Agents
   const addAgent = async (agent: Agent | Omit<Agent, 'id'>) => {
     try {
-      const newAgent = await agentService.create(agent as Agent);
+      const token = await getToken();
+      // Assuming CreateAgentParams is compatible with Agent | Omit<Agent, 'id'>
+      const newAgent = await agentService.create(agent as Agent, token || undefined);
       setAgents(prev => [...prev, newAgent]);
       return newAgent;
     } catch (err) {
       console.error('Failed to add agent:', err);
       // Fallback for demo if API fails/not ready (though it should be)
-      const mockAgent = 'id' in agent ? agent : { ...agent, id: `a${agents.length + 1}` };
+      const mockAgent = 'id' in agent ? agent : { ...agent, id: `a${agents.length + 1} ` };
       setAgents([...agents, mockAgent as Agent]);
       return mockAgent as Agent;
     }
@@ -168,7 +157,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteAgent = async (id: string) => {
     try {
-      await agentService.delete(id);
+      const token = await getToken();
+      await agentService.delete(id, token || undefined);
       setAgents(prev => prev.filter(a => a.id !== id));
     } catch (err) {
       console.error("Failed to delete agent:", err);
@@ -183,7 +173,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Inquiries
   const addInquiry = async (data: Omit<Inquiry, 'id' | 'date' | 'status'>) => {
     try {
-      const newInquiry = await inquiryService.create(data);
+      const token = await getToken();
+      const newInquiry = await inquiryService.create(data, token || undefined);
       setInquiries(prev => [newInquiry, ...prev]);
     } catch (err) {
       console.error('Failed to send inquiry:', err);
@@ -193,7 +184,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateInquiryStatus = async (id: string, status: string) => {
     try {
-      await inquiryService.updateStatus(id, status);
+      const token = await getToken();
+      await inquiryService.updateStatus(id, status, token || undefined);
       setInquiries(prev => prev.map(i => i.id === id ? { ...i, status: status as 'new' | 'contacted' | 'closed' } : i));
     } catch (err) {
       console.error('Failed to update inquiry status:', err);
@@ -205,7 +197,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Tours
   const addTour = async (data: Omit<VirtualTour, 'id' | 'date' | 'stops'>) => {
     try {
-      const newTour = await tourService.create(data as any);
+      const token = await getToken();
+      const newTour = await tourService.create(data as any, token || undefined);
       setVirtualTours(prev => [newTour, ...prev]);
       return newTour;
     } catch (err) {
@@ -216,7 +209,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const addTourStop = async (tourId: string, stop: Omit<TourStop, 'id' | 'timestamp'>) => {
     try {
-      const newStop = await tourService.addStop(tourId, stop as any);
+      const token = await getToken();
+      const newStop = await tourService.addStop(tourId, stop as any, token || undefined);
       setVirtualTours(prev => prev.map(t =>
         t.id === tourId ? { ...t, stops: [...t.stops, { ...newStop, timestamp: Date.now() }] } : t
       ));
@@ -230,7 +224,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteTour = async (id: string) => {
     try {
-      await tourService.delete(id);
+      const token = await getToken();
+      await tourService.delete(id, token || undefined);
       setVirtualTours(prev => prev.filter(t => t.id !== id));
     } catch (err) {
       console.error('Failed to delete tour:', err);
@@ -239,10 +234,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Contractors
-  // Contractors
   const addContractor = async (data: Omit<Contractor, 'id'>) => {
     try {
-      const newContractor = await contractorService.create(data);
+      const token = await getToken();
+      const newContractor = await contractorService.create(data, token || undefined);
       setContractors(prev => [...prev, newContractor]);
       return newContractor;
     } catch (err) {
@@ -262,7 +257,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteContractor = async (id: string) => {
     try {
-      await contractorService.delete(id);
+      const token = await getToken();
+      await contractorService.delete(id, token || undefined);
       setContractors(prev => prev.filter(c => c.id !== id));
     } catch (err) {
       console.error('Failed to delete contractor:', err);
@@ -273,7 +269,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Conveyancers
   const addConveyancer = async (data: Omit<Conveyancer, 'id'>) => {
     try {
-      const newConveyancer = await conveyancerService.create(data);
+      const token = await getToken();
+      const newConveyancer = await conveyancerService.create(data, token || undefined);
       setConveyancers(prev => [...prev, newConveyancer]);
     } catch (err) {
       console.error('Failed to add conveyancer:', err);
@@ -283,7 +280,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteConveyancer = async (id: string) => {
     try {
-      await conveyancerService.delete(id);
+      const token = await getToken();
+      await conveyancerService.delete(id, token || undefined);
       setConveyancers(prev => prev.filter(c => c.id !== id));
     } catch (err) {
       console.error('Failed to delete conveyancer:', err);
@@ -294,7 +292,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Maintenance Requests
   const addMaintenanceRequest = async (data: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const newRequest = await maintenanceService.create(data);
+      const token = await getToken();
+      const newRequest = await maintenanceService.create(data, token || undefined);
       setMaintenanceRequests(prev => [newRequest, ...prev]);
     } catch (err) {
       console.error('Failed to create maintenance request:', err);
@@ -304,7 +303,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateMaintenanceRequest = async (id: string, updates: Partial<MaintenanceRequest>) => {
     try {
-      await maintenanceService.update(id, updates);
+      const token = await getToken();
+      await maintenanceService.update(id, updates, token || undefined);
       setMaintenanceRequests(prev => prev.map(r => r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r));
     } catch (err) {
       console.error('Failed to update maintenance request:', err);
@@ -314,7 +314,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const deleteMaintenanceRequest = async (id: string) => {
     try {
-      await maintenanceService.delete(id);
+      const token = await getToken();
+      await maintenanceService.delete(id, token || undefined);
       setMaintenanceRequests(prev => prev.filter(r => r.id !== id));
     } catch (err) {
       console.error('Failed to delete maintenance request:', err);
@@ -333,6 +334,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addContractor, deleteContractor,
       addConveyancer, deleteConveyancer,
       addMaintenanceRequest, updateMaintenanceRequest, deleteMaintenanceRequest,
+      addAgency,
       refreshData: fetchData
     }}>
       {children}

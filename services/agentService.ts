@@ -32,27 +32,31 @@ interface AgentsListResponse {
 
 export const agentService = {
     // List all agents
-    async list(): Promise<Agent[]> {
-        const response = await apiRequest<AgentsListResponse>('/agents');
+    async list(token?: string): Promise<Agent[]> {
+        const response = await apiRequest<AgentsListResponse>('/api/agents', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         return response.agents || [];
     },
 
     // Create a new agent
-    async create(data: CreateAgentParams): Promise<Agent> {
-        return apiRequest<Agent>('/agents', {
+    async create(params: CreateAgentParams, token?: string): Promise<Agent> {
+        return apiRequest<Agent>('/api/agents', {
             method: 'POST',
-            body: JSON.stringify(data),
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: JSON.stringify(params),
         });
     },
 
     // Delete an agent
-    async delete(id: string): Promise<void> {
-        return apiRequest<void>(`/agents/${id}`, {
+    async delete(id: string, token?: string): Promise<void> {
+        return apiRequest<void>(`/api/agents/${id}`, {
             method: 'DELETE',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
     },
 
-    // Get agent by ID (if backend supports it)
+    // Get agent by ID
     async getById(id: string): Promise<Agent | null> {
         try {
             const response = await apiRequest<{ agent?: Agent }>(`/agents/${id}`);

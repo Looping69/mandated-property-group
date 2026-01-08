@@ -59,8 +59,10 @@ interface SuccessResponse {
 
 export const userService = {
     // Get user by Clerk ID (typically called after sign-in)
-    async getByClerkId(clerkId: string): Promise<User | null> {
-        const response = await apiRequest<UserResponse>(`/api/users/clerk/${clerkId}`);
+    async getByClerkId(clerkId: string, token?: string): Promise<User | null> {
+        const response = await apiRequest<UserResponse>(`/api/users/clerk/${clerkId}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         return response.user || null;
     },
 
@@ -71,30 +73,36 @@ export const userService = {
     },
 
     // Create user (called after Clerk signup to sync user data)
-    async create(params: CreateUserParams): Promise<User> {
+    async create(params: CreateUserParams, token?: string): Promise<User> {
         return apiRequest<User>('/api/users', {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify(params),
         });
     },
 
     // Update user profile
-    async update(id: string, updates: UpdateUserParams): Promise<SuccessResponse> {
+    async update(id: string, updates: UpdateUserParams, token?: string): Promise<SuccessResponse> {
         return apiRequest<SuccessResponse>(`/api/users/${id}`, {
             method: 'PUT',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify(updates),
         });
     },
 
     // Get all users (admin only)
-    async list(): Promise<User[]> {
-        const response = await apiRequest<UsersListResponse>('/api/users');
+    async list(token?: string): Promise<User[]> {
+        const response = await apiRequest<UsersListResponse>('/api/users', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         return response.users || [];
     },
 
     // Get users by role
-    async getByRole(role: UserRole): Promise<User[]> {
-        const response = await apiRequest<UsersListResponse>(`/api/users/role/${role}`);
+    async getByRole(role: UserRole, token?: string): Promise<User[]> {
+        const response = await apiRequest<UsersListResponse>(`/api/users/role/${role}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
         return response.users || [];
     },
 

@@ -14,7 +14,7 @@ const getAI = () => {
 };
 
 export const generateDescription = api(
-    { expose: true, method: "POST", path: "/ai/generate-description" },
+    { expose: true, method: "POST", path: "/api/ai/generate-description" },
     async ({ features }: { features: string }): Promise<{ description: string }> => {
         const ai = getAI();
         const result = await ai.models.generateContent({
@@ -27,7 +27,7 @@ export const generateDescription = api(
 );
 
 export const analyzeTourImage = api(
-    { expose: true, method: "POST", path: "/ai/analyze-tour-image" },
+    { expose: true, method: "POST", path: "/api/ai/analyze-tour-image" },
     async ({ image, context }: { image: string, context: string }): Promise<{ title: string; script: string }> => {
         const ai = getAI();
 

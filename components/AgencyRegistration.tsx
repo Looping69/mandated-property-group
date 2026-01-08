@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Building, Upload, CheckCircle, ArrowRight,
     MapPin, Globe, FileText, Smartphone, Mail, Award, Camera,
@@ -10,6 +10,7 @@ import { Card, Input } from './admin/Shared';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { ClerkSignUpStep } from './ClerkSignUpStep';
+import { useUser } from '../contexts/AuthContext';
 
 interface AgencyRegistrationProps {
     onSubmit: (agency: any) => Promise<void>;

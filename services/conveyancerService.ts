@@ -19,15 +19,18 @@ export interface CreateConveyancerParams {
 
 export const conveyancerService = {
     // List all conveyancers
-    async list(): Promise<Conveyancer[]> {
-        const response = await apiRequest<ConveyancersListResponse>('/conveyancers');
+    async list(token?: string): Promise<Conveyancer[]> {
+        const response = await apiRequest<ConveyancersListResponse>('/api/conveyancers', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         return response.conveyancers || [];
     },
 
     // Create a new conveyancer
-    async create(data: CreateConveyancerParams): Promise<Conveyancer> {
-        return apiRequest<Conveyancer>('/conveyancers', {
+    async create(data: CreateConveyancerParams, token?: string): Promise<Conveyancer> {
+        return apiRequest<Conveyancer>('/api/conveyancers', {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify({
                 name: data.name,
                 specialist: data.specialist,
@@ -42,9 +45,10 @@ export const conveyancerService = {
     },
 
     // Delete a conveyancer
-    async delete(id: string): Promise<void> {
-        return apiRequest<void>(`/conveyancers/${id}`, {
+    async delete(id: string, token?: string): Promise<void> {
+        return apiRequest<void>(`/api/conveyancers/${id}`, {
             method: 'DELETE',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
     },
 

@@ -28,15 +28,18 @@ interface ContractorsListResponse {
 
 export const contractorService = {
     // List all contractors
-    async list(): Promise<Contractor[]> {
-        const response = await apiRequest<ContractorsListResponse>('/contractors');
+    async list(token?: string): Promise<Contractor[]> {
+        const response = await apiRequest<ContractorsListResponse>('/api/contractors', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         return response.contractors || [];
     },
 
     // Create a new contractor
-    async create(data: CreateContractorParams): Promise<Contractor> {
-        return apiRequest<Contractor>('/contractors', {
+    async create(data: CreateContractorParams, token?: string): Promise<Contractor> {
+        return apiRequest<Contractor>('/api/contractors', {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify({
                 name: data.name,
                 trade: data.trade,
@@ -53,9 +56,10 @@ export const contractorService = {
     },
 
     // Delete a contractor
-    async delete(id: string): Promise<void> {
-        return apiRequest<void>(`/contractors/${id}`, {
+    async delete(id: string, token?: string): Promise<void> {
+        return apiRequest<void>(`/api/contractors/${id}`, {
             method: 'DELETE',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
     },
 

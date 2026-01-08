@@ -29,7 +29,7 @@ export interface CreateConveyancerParams {
 // --- API Endpoints ---
 
 export const listConveyancers = api(
-    { expose: true, method: "GET", path: "/conveyancers" },
+    { expose: true, method: "GET", path: "/api/conveyancers" },
     async (): Promise<{ conveyancers: Conveyancer[] }> => {
         const conveyancers: Conveyancer[] = [];
         const rows = db.query`
@@ -54,7 +54,7 @@ export const listConveyancers = api(
 );
 
 export const createConveyancer = api(
-    { expose: true, method: "POST", path: "/conveyancers" },
+    { expose: true, method: "POST", path: "/api/conveyancers" },
     async (params: CreateConveyancerParams): Promise<Conveyancer> => {
         const id = `cv${Math.random().toString(36).substring(2, 9)}`;
         await db.exec`
@@ -66,7 +66,7 @@ export const createConveyancer = api(
 );
 
 export const deleteConveyancer = api(
-    { expose: true, method: "DELETE", path: "/conveyancers/:id" },
+    { expose: true, method: "DELETE", path: "/api/conveyancers/:id" },
     async ({ id }: { id: string }): Promise<void> => {
         await db.exec`DELETE FROM conveyancers WHERE id = ${id}`;
     }

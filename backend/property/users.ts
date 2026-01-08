@@ -128,7 +128,7 @@ export const getUserByEmail = api(
 export const createUser = api(
     { expose: true, method: "POST", path: "/api/users" },
     async (params: CreateUserParams): Promise<User> => {
-        const id = `u${Math.random().toString(36).substring(2, 9)}`;
+        const id = `u_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
         const now = new Date();
 
         const agentId = params.agentId || null;
@@ -171,28 +171,22 @@ export const createUser = api(
 
 // Update user
 export const updateUser = api(
-    { expose: true, method: "PUT", path: "/api/users/:id" },
+    { expose: true, auth: true, method: "PUT", path: "/api/users/:id" },
     async ({ id, ...updates }: { id: string } & UpdateUserParams): Promise<{ success: boolean }> => {
         const now = new Date();
 
-        if (updates.firstName !== undefined) {
-            await db.exec`UPDATE users SET first_name = ${updates.firstName}, updated_at = ${now} WHERE id = ${id}`;
-        }
-        if (updates.lastName !== undefined) {
-            await db.exec`UPDATE users SET last_name = ${updates.lastName}, updated_at = ${now} WHERE id = ${id}`;
-        }
-        if (updates.phone !== undefined) {
-            await db.exec`UPDATE users SET phone = ${updates.phone}, updated_at = ${now} WHERE id = ${id}`;
-        }
-        if (updates.imageUrl !== undefined) {
-            await db.exec`UPDATE users SET image_url = ${updates.imageUrl}, updated_at = ${now} WHERE id = ${id}`;
-        }
-        if (updates.isVerified !== undefined) {
-            await db.exec`UPDATE users SET is_verified = ${updates.isVerified}, updated_at = ${now} WHERE id = ${id}`;
-        }
-        if (updates.isActive !== undefined) {
-            await db.exec`UPDATE users SET is_active = ${updates.isActive}, updated_at = ${now} WHERE id = ${id}`;
-        }
+        await db.exec`
+            UPDATE users 
+            SET 
+                first_name = COALESCE(${updates.firstName ?? null}, first_name),
+                last_name = COALESCE(${updates.lastName ?? null}, last_name),
+                phone = COALESCE(${updates.phone ?? null}, phone),
+                image_url = COALESCE(${updates.imageUrl ?? null}, image_url),
+                is_verified = COALESCE(${updates.isVerified ?? null}, is_verified),
+                is_active = COALESCE(${updates.isActive ?? null}, is_active),
+                updated_at = ${now}
+            WHERE id = ${id}
+        `;
 
         return { success: true };
     }
@@ -200,7 +194,7 @@ export const updateUser = api(
 
 // Get all users (admin endpoint)
 export const listUsers = api(
-    { expose: true, method: "GET", path: "/api/users" },
+    { expose: true, auth: true, method: "GET", path: "/api/users" },
     async (): Promise<{ users: User[] }> => {
         const users: User[] = [];
         const rows = db.query`

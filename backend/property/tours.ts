@@ -42,7 +42,7 @@ export interface CreateTourStopParams {
 // --- API Endpoints ---
 
 export const listTours = api(
-    { expose: true, method: "GET", path: "/tours" },
+    { expose: true, method: "GET", path: "/api/tours" },
     async (): Promise<{ tours: VirtualTour[] }> => {
         const toursMap = new Map<string, VirtualTour>();
 
@@ -89,7 +89,7 @@ export const listTours = api(
 );
 
 export const createTour = api(
-    { expose: true, method: "POST", path: "/tours" },
+    { expose: true, method: "POST", path: "/api/tours" },
     async (params: CreateTourParams): Promise<VirtualTour> => {
         const id = `vt${Math.random().toString(36).substring(2, 9)}`;
         const date = new Date().toISOString();
@@ -115,7 +115,7 @@ export const createTour = api(
 );
 
 export const addTourStop = api(
-    { expose: true, method: "POST", path: "/tours/:tourId/stops" },
+    { expose: true, method: "POST", path: "/api/tours/:tourId/stops" },
     async (params: CreateTourStopParams): Promise<TourStop> => {
         const id = `ts${Math.random().toString(36).substring(2, 9)}`;
 
@@ -129,7 +129,7 @@ export const addTourStop = api(
 );
 
 export const deleteTour = api(
-    { expose: true, method: "DELETE", path: "/tours/:id" },
+    { expose: true, method: "DELETE", path: "/api/tours/:id" },
     async ({ id }: { id: string }): Promise<void> => {
         // Stops are deleted via CASCADE
         await db.exec`DELETE FROM virtual_tours WHERE id = ${id}`;

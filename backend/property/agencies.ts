@@ -40,7 +40,7 @@ export interface CreateAgencyParams {
 
 // List all agencies
 export const listAgencies = api(
-    { expose: true, method: "GET", path: "/agencies" },
+    { expose: true, method: "GET", path: "/api/agencies" },
     async (): Promise<{ agencies: Agency[] }> => {
         const agencies: Agency[] = [];
         const rows = db.query`
@@ -79,7 +79,7 @@ export const listAgencies = api(
 
 // Get single agency
 export const getAgency = api(
-    { expose: true, method: "GET", path: "/agencies/:id" },
+    { expose: true, method: "GET", path: "/api/agencies/:id" },
     async ({ id }: { id: string }): Promise<{ agency?: Agency }> => {
         const rows = db.query`
             SELECT 
@@ -119,9 +119,9 @@ export const getAgency = api(
 
 // Create agency
 export const createAgency = api(
-    { expose: true, method: "POST", path: "/agencies" },
+    { expose: true, auth: true, method: "POST", path: "/api/agencies" },
     async (params: CreateAgencyParams): Promise<Agency> => {
-        const id = `ag${Math.random().toString(36).substring(2, 9)}`;
+        const id = `ag_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
         const now = new Date();
 
         const registrationNumber = params.registrationNumber || null;
@@ -170,7 +170,7 @@ export const createAgency = api(
 
 // Delete agency
 export const deleteAgency = api(
-    { expose: true, method: "DELETE", path: "/agencies/:id" },
+    { expose: true, auth: true, method: "DELETE", path: "/api/agencies/:id" },
     async ({ id }: { id: string }): Promise<void> => {
         await db.exec`DELETE FROM agencies WHERE id = ${id}`;
     }
@@ -178,7 +178,7 @@ export const deleteAgency = api(
 
 // Get agents for an agency
 export const getAgencyAgents = api(
-    { expose: true, method: "GET", path: "/agencies/:id/agents" },
+    { expose: true, method: "GET", path: "/api/agencies/:id/agents" },
     async ({ id }: { id: string }): Promise<{ agents: { id: string; name: string; email: string; title?: string }[] }> => {
         const agents: { id: string; name: string; email: string; title?: string }[] = [];
         const rows = db.query`

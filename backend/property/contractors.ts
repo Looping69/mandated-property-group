@@ -33,7 +33,7 @@ export interface CreateContractorParams {
 // --- API Endpoints ---
 
 export const listContractors = api(
-    { expose: true, method: "GET", path: "/contractors" },
+    { expose: true, method: "GET", path: "/api/contractors" },
     async (): Promise<{ contractors: Contractor[] }> => {
         const contractors: Contractor[] = [];
         const rows = db.query`
@@ -60,7 +60,7 @@ export const listContractors = api(
 );
 
 export const createContractor = api(
-    { expose: true, method: "POST", path: "/contractors" },
+    { expose: true, method: "POST", path: "/api/contractors" },
     async (params: CreateContractorParams): Promise<Contractor> => {
         const id = `c${Math.random().toString(36).substring(2, 9)}`;
         await db.exec`
@@ -72,7 +72,7 @@ export const createContractor = api(
 );
 
 export const deleteContractor = api(
-    { expose: true, method: "DELETE", path: "/contractors/:id" },
+    { expose: true, method: "DELETE", path: "/api/contractors/:id" },
     async ({ id }: { id: string }): Promise<void> => {
         await db.exec`DELETE FROM contractors WHERE id = ${id}`;
     }

@@ -1,32 +1,31 @@
-
 "use client";
 
 import React from 'react';
-import { Menu, X, Camera, Home, Users, LayoutGrid, UserCircle, LogIn, Lock, Hammer, Scale, Wrench } from 'lucide-react';
-import { AppView } from '../types';
+import { Menu, X, Camera, Home, Users, Lock, UserCircle } from 'lucide-react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { SignedIn, SignedOut, useClerk, UserButton } from "../contexts/AuthContext";
 
 interface LayoutProps {
   children: React.ReactNode;
-  currentView: AppView;
-  onChangeView: (view: AppView) => void;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeView }) => {
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const { openSignIn } = useClerk();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  const NavLink = ({ view, label }: { view: AppView; label: string }) => (
-    <button
-      onClick={() => {
-        onChangeView(view);
-        setIsMenuOpen(false);
-      }}
-      className={`text-sm font-medium transition-colors duration-200 ${currentView === view ? 'text-brand-green font-bold' : 'text-slate-600 hover:text-brand-green'
+  const isActive = (path: string) => location.pathname === path;
+
+  const NavLink = ({ to, label }: { to: string; label: string }) => (
+    <Link
+      to={to}
+      onClick={() => setIsMenuOpen(false)}
+      className={`text-sm font-medium transition-colors duration-200 ${isActive(to) ? 'text-brand-green font-bold' : 'text-slate-600 hover:text-brand-green'
         }`}
     >
       {label}
-    </button>
+    </Link>
   );
 
   return (
@@ -36,10 +35,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <div
-              className="flex items-center cursor-pointer gap-3"
-              onClick={() => onChangeView(AppView.HOME)}
-            >
+            <Link to="/" className="flex items-center gap-3">
               <div className="w-10 h-10 bg-brand-purple rounded-lg flex items-center justify-center shadow-md">
                 <Home className="text-white" size={24} />
               </div>
@@ -49,41 +45,48 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               <span className="font-serif text-2xl font-bold text-brand-green tracking-tight lg:hidden">
                 SHP
               </span>
-            </div>
+            </Link>
 
             {/* Desktop Nav */}
             <nav className="hidden md:flex items-center space-x-6">
-              <NavLink view={AppView.HOME} label="Home" />
-              <NavLink view={AppView.AGENTS} label="Top Area Agents" />
-              <NavLink view={AppView.LISTINGS} label="Listings" />
-              <NavLink view={AppView.CONVEYANCER} label="Conveyancers" />
-              <NavLink view={AppView.MAINTENANCE} label="Maintenance" />
+              <NavLink to="/" label="Home" />
+              <NavLink to="/agents" label="Top Area Agents" />
+              <NavLink to="/listings" label="Listings" />
+              <NavLink to="/conveyancing" label="Conveyancers" />
+              <NavLink to="/maintenance" label="Maintenance" />
               <SignedIn>
-                <button
-                  onClick={() => onChangeView(AppView.TOUR_CREATOR)}
-                  className={`text-sm font-medium transition-colors duration-200 flex items-center gap-1 ${currentView === AppView.TOUR_CREATOR ? 'text-brand-green font-bold' : 'text-slate-600 hover:text-brand-green'
+                <Link
+                  to="/tour-creator"
+                  className={`text-sm font-medium transition-colors duration-200 flex items-center gap-1 ${isActive('/tour-creator') ? 'text-brand-green font-bold' : 'text-slate-600 hover:text-brand-green'
                     }`}
                 >
                   <Camera size={14} /> AI Studio
-                </button>
+                </Link>
               </SignedIn>
             </nav>
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-3">
               <SignedIn>
-                <button
-                  onClick={() => onChangeView(AppView.ADMIN)}
+                <Link
+                  to="/admin"
                   className="flex items-center text-xs text-brand-green font-bold px-3 py-2 border border-brand-green/20 bg-brand-green/5 rounded-md uppercase tracking-wider mr-2"
                 >
                   <Lock size={12} className="mr-2" />
+                  Admin
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className="flex items-center text-xs text-brand-green font-bold px-3 py-2 border border-brand-green/20 bg-brand-green/5 rounded-md uppercase tracking-wider mr-2"
+                >
+                  <LayoutGrid size={12} className="mr-2" />
                   Dashboard
-                </button>
+                </Link>
                 <UserButton />
               </SignedIn>
               <SignedOut>
                 <button
-                  onClick={() => onChangeView(AppView.JOIN_SELECTION)}
+                  onClick={() => navigate('/join')}
                   className="flex items-center border-2 border-brand-green text-brand-green hover:bg-brand-green hover:text-white px-4 py-2 rounded-md font-bold text-sm transition-all"
                 >
                   <Users size={16} className="mr-2" />
@@ -113,23 +116,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
         {isMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl z-50">
             <div className="px-4 py-4 space-y-4 flex flex-col">
-              <NavLink view={AppView.HOME} label="Home" />
-              <NavLink view={AppView.AGENTS} label="Top Area Agents" />
-              <NavLink view={AppView.LISTINGS} label="Listings" />
-              <NavLink view={AppView.CONVEYANCER} label="Conveyancers" />
-              <NavLink view={AppView.MAINTENANCE} label="Maintenance" />
+              <NavLink to="/" label="Home" />
+              <NavLink to="/agents" label="Top Area Agents" />
+              <NavLink to="/listings" label="Listings" />
+              <NavLink to="/conveyancing" label="Conveyancers" />
+              <NavLink to="/maintenance" label="Maintenance" />
               <SignedIn>
-                <NavLink view={AppView.TOUR_CREATOR} label="AI Tour Studio" />
+                <NavLink to="/tour-creator" label="AI Tour Studio" />
+                <NavLink to="/admin" label="Admin Panel" />
+                <NavLink to="/dashboard" label="Dashboard" />
               </SignedIn>
               <hr className="border-gray-100" />
 
               <SignedIn>
-                <button
-                  onClick={() => { onChangeView(AppView.ADMIN); setIsMenuOpen(false); }}
-                  className="flex items-center text-slate-500 font-bold py-2 text-sm"
-                >
-                  <Lock size={16} className="mr-2" /> Dashboard
-                </button>
                 <div className="flex items-center gap-2 py-2">
                   <UserButton /> <span className="text-sm font-bold text-slate-600">My Account</span>
                 </div>
@@ -137,7 +136,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
 
               <SignedOut>
                 <button
-                  onClick={() => { onChangeView(AppView.JOIN_SELECTION); setIsMenuOpen(false); }}
+                  onClick={() => { navigate('/join'); setIsMenuOpen(false); }}
                   className="flex items-center border-2 border-brand-green text-brand-green justify-center px-4 py-3 rounded-md font-bold w-full mb-2"
                 >
                   <Users size={18} className="mr-2" /> Join Our Network
@@ -155,12 +154,12 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
       </header >
 
       {/* Main Content */}
-      < main className="flex-grow" >
+      <main className="flex-grow">
         {children}
-      </main >
+      </main>
 
       {/* Footer */}
-      < footer className="bg-brand-purpleDark text-white pt-16 pb-8" >
+      <footer className="bg-brand-purpleDark text-white pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-1 md:col-span-1">
@@ -174,7 +173,6 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
                 South Africa's easiest Real Estate Platform to find your perfect property. Connect with top agents, conveyancers, and maintenance contractors.
               </p>
               <div className="flex space-x-4">
-                {/* Social placeholders */}
                 <div className="w-8 h-8 rounded-full bg-brand-purple hover:bg-brand-green transition-colors cursor-pointer flex items-center justify-center">
                   <span className="font-bold text-xs">f</span>
                 </div>
@@ -189,11 +187,13 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
               <ul className="space-y-3 text-sm text-slate-300">
                 <li className="hover:text-brand-green cursor-pointer">Contact Us</li>
                 <li className="hover:text-brand-green cursor-pointer">About Us</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.CONVEYANCER)}>Find Your Conveyancer</li>
+                <li><Link to="/conveyancing" className="hover:text-brand-green">Find Your Conveyancer</Link></li>
                 <li className="hover:text-brand-green cursor-pointer">Calculators</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.MAINTENANCE)}>Maintenance Services</li>
-                <li className="hover:text-brand-green cursor-pointer font-bold flex items-center gap-2" onClick={() => onChangeView(AppView.JOIN_SELECTION)}>
-                  <Users size={14} /> Join Our Network
+                <li><Link to="/maintenance" className="hover:text-brand-green">Maintenance Services</Link></li>
+                <li className="font-bold flex items-center gap-2">
+                  <Link to="/join" className="hover:text-brand-green flex items-center gap-2">
+                    <Users size={14} /> Join Our Network
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -201,11 +201,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
             <div>
               <h4 className="font-bold text-white mb-6">Our Services</h4>
               <ul className="space-y-3 text-sm text-slate-300">
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_SHOW_PROPERTY)}>On Show Property</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_TOP_AREA_AGENT)}>Top Area Agent</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_MAINTENANCE)}>Maintenance Contractors</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_CONVEYANCING)}>Conveyancing Services</li>
-                <li className="hover:text-brand-green cursor-pointer" onClick={() => onChangeView(AppView.SERVICE_PARTNER_PORTAL)}>Partner Portal</li>
+                <li><Link to="/services/show-property" className="hover:text-brand-green">On Show Property</Link></li>
+                <li><Link to="/services/top-area-agent" className="hover:text-brand-green">Top Area Agent</Link></li>
+                <li><Link to="/services/maintenance" className="hover:text-brand-green">Maintenance Contractors</Link></li>
+                <li><Link to="/services/conveyancing" className="hover:text-brand-green">Conveyancing Services</Link></li>
+                <li><Link to="/services/partner-portal" className="hover:text-brand-green">Partner Portal</Link></li>
               </ul>
             </div>
 
@@ -233,13 +233,15 @@ export const Layout: React.FC<LayoutProps> = ({ children, currentView, onChangeV
           <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400">
             <p>© {new Date().getFullYear()} Show House Property. All rights reserved.</p>
             <div className="flex space-x-6 mt-4 md:mt-0">
-              <span className="cursor-pointer hover:text-white" onClick={() => onChangeView(AppView.PRIVACY_POLICY)}>Privacy Policy</span>
-              <span className="cursor-pointer hover:text-white" onClick={() => onChangeView(AppView.TERMS_OF_SERVICE)}>Terms of Service</span>
-              <span className="cursor-pointer hover:text-white" onClick={() => onChangeView(AppView.POPIA_COMPLIANCE)}>POPIA Act Compliance</span>
+              <Link to="/privacy" className="hover:text-white">Privacy Policy</Link>
+              <Link to="/terms" className="hover:text-white">Terms of Service</Link>
+              <Link to="/popia" className="hover:text-white">POPIA Act Compliance</Link>
             </div>
           </div>
         </div>
-      </footer >
-    </div >
+      </footer>
+    </div>
   );
 };
+
+import { LayoutGrid } from 'lucide-react';

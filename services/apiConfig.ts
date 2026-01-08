@@ -2,17 +2,27 @@
 const API_URL = import.meta.env.VITE_ENCORE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:4000');
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const headers = new Headers(options.headers);
+
+    // Ensure Content-Type is set if not already
+    if (!headers.has('Content-Type')) {
+        headers.set('Content-Type', 'application/json');
+    }
+
     const response = await fetch(`${API_URL}${path}`, {
         ...options,
-        headers: {
-            'Content-Type': 'application/json',
-            ...options.headers,
-        },
+        headers,
     });
 
     if (!response.ok) {
-        const error = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
-        throw new Error(error.message || `API Request failed: ${response.statusText}`);
+        let errorMsg = `API Request failed: ${response.statusText}`;
+        try {
+            const error = await response.json();
+            errorMsg = error.message || errorMsg;
+        } catch {
+            // No JSON body
+        }
+        throw new Error(errorMsg);
     }
 
     // Handle empty responses (e.g., DELETE operations)

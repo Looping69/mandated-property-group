@@ -20,23 +20,27 @@ export interface CreateInquiryParams {
 
 export const inquiryService = {
     // List all inquiries
-    async list(): Promise<Inquiry[]> {
-        const response = await apiRequest<InquiriesListResponse>('/inquiries');
+    async list(token?: string): Promise<Inquiry[]> {
+        const response = await apiRequest<InquiriesListResponse>('/api/inquiries', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         return response.inquiries || [];
     },
 
     // Create a new inquiry
-    async create(data: CreateInquiryParams): Promise<Inquiry> {
-        return apiRequest<Inquiry>('/inquiries', {
+    async create(data: CreateInquiryParams, token?: string): Promise<Inquiry> {
+        return apiRequest<Inquiry>('/api/inquiries', {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify(data),
         });
     },
 
     // Update inquiry status
-    async updateStatus(id: string, status: string): Promise<SuccessResponse> {
-        return apiRequest<SuccessResponse>(`/inquiries/${id}/status`, {
+    async updateStatus(id: string, status: string, token?: string): Promise<SuccessResponse> {
+        return apiRequest<SuccessResponse>(`/api/inquiries/${id}/status`, {
             method: 'PUT',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify({ id, status }),
         });
     },

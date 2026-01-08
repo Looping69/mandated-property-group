@@ -23,15 +23,18 @@ export interface CreateTourStopParams {
 
 export const tourService = {
     // List all tours
-    async list(): Promise<VirtualTour[]> {
-        const response = await apiRequest<ToursListResponse>('/tours');
+    async list(token?: string): Promise<VirtualTour[]> {
+        const response = await apiRequest<ToursListResponse>('/api/tours', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         return response.tours || [];
     },
 
     // Create a new tour
-    async create(data: CreateTourParams): Promise<VirtualTour> {
-        return apiRequest<VirtualTour>('/tours', {
+    async create(data: CreateTourParams, token?: string): Promise<VirtualTour> {
+        return apiRequest<VirtualTour>('/api/tours', {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify({
                 title: data.title,
                 agentId: data.agentId,
@@ -43,17 +46,19 @@ export const tourService = {
     },
 
     // Add a stop to a tour
-    async addStop(tourId: string, stop: CreateTourStopParams): Promise<TourStop> {
-        return apiRequest<TourStop>(`/tours/${tourId}/stops`, {
+    async addStop(tourId: string, stop: CreateTourStopParams, token?: string): Promise<TourStop> {
+        return apiRequest<TourStop>(`/api/tours/${tourId}/stops`, {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify({ ...stop, tourId }),
         });
     },
 
     // Delete a tour
-    async delete(id: string): Promise<void> {
-        return apiRequest<void>(`/tours/${id}`, {
+    async delete(id: string, token?: string): Promise<void> {
+        return apiRequest<void>(`/api/tours/${id}`, {
             method: 'DELETE',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
     },
 

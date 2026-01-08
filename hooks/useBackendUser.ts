@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useUser } from '@clerk/clerk-react';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import { userService, User } from '../services/userService';
 
 // Extended User type including helper flags
@@ -14,6 +14,7 @@ interface BackendUserData {
 
 export function useBackendUser(): BackendUserData {
     const { user: clerkUser, isLoaded, isSignedIn } = useUser();
+    const { getToken } = useAuth();
     const [backendUser, setBackendUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<Error | null>(null);
@@ -29,7 +30,8 @@ export function useBackendUser(): BackendUserData {
         try {
             setIsLoading(true);
             setError(null);
-            const user = await userService.getByClerkId(clerkUser.id);
+            const token = await getToken();
+            const user = await userService.getByClerkId(clerkUser.id, token || undefined);
             setBackendUser(user);
         } catch (err) {
             console.error('Failed to fetch backend user:', err);
@@ -42,7 +44,7 @@ export function useBackendUser(): BackendUserData {
 
     useEffect(() => {
         fetchBackendUser();
-    }, [clerkUser?.id, isLoaded, isSignedIn]);
+    }, [clerkUser?.id, isLoaded, isSignedIn, getToken]);
 
     return {
         user: backendUser,
