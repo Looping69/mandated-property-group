@@ -266,7 +266,7 @@ export const deleteProperty = api(
 
 // Inquiries
 export const listInquiries = api(
-    { expose: true, method: "GET", path: "/inquiries" },
+    { expose: true, method: "GET", path: "/api/inquiries" },
     async (): Promise<{ inquiries: Inquiry[] }> => {
         const inquiries: Inquiry[] = [];
         const rows = db.query`SELECT id, listing_id as "listingId", agent_id as "agentId", customer_name as "customerName", customer_email as "customerEmail", message, status, created_at as "date" FROM inquiries`;
@@ -287,7 +287,7 @@ export const listInquiries = api(
 );
 
 export const createInquiry = api(
-    { expose: true, method: "POST", path: "/inquiries" },
+    { expose: true, method: "POST", path: "/api/inquiries" },
     async (p: CreateInquiryParams): Promise<Inquiry> => {
         const id = Math.random().toString(36).substring(2, 11);
         const status = "new";
@@ -313,7 +313,7 @@ export const createInquiry = api(
 
 // Ping
 export const ping = api(
-    { expose: true, method: "GET", path: "/ping" },
+    { expose: true, method: "GET", path: "/api/ping" },
     async () => {
         return { message: "pong - Mandated Property Group Backend" };
     }
@@ -321,7 +321,7 @@ export const ping = api(
 
 // Update Inquiry Status
 export const updateInquiryStatus = api(
-    { expose: true, method: "PUT", path: "/inquiries/:id/status" },
+    { expose: true, method: "PUT", path: "/api/inquiries/:id/status" },
     async ({ id, status }: { id: string; status: string }): Promise<{ success: boolean }> => {
         await db.exec`UPDATE inquiries SET status = ${status} WHERE id = ${id}`;
         return { success: true };
