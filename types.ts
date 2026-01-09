@@ -46,8 +46,12 @@ export interface TourStop {
   title: string; // e.g., "Grand Foyer"
   description: string; // AI Generated description
   image: string; // Base64 or URL
+  audioUrl?: string; // Pre-generated TTS audio (base64 data URL or cloud storage URL)
   timestamp: number;
 }
+
+// Voice presets for Google Cloud TTS
+export type VoicePreset = 'JAMES' | 'OLIVIA';
 
 export interface VirtualTour {
   id: string;
@@ -57,7 +61,8 @@ export interface VirtualTour {
   stops: TourStop[];
   date: string;
   status: 'published' | 'draft';
-  voiceURI?: string; // The preferred system voice ID
+  voicePreset?: VoicePreset; // Premium Google Cloud TTS voice
+  voiceURI?: string; // Legacy browser TTS fallback
 }
 
 export interface Inquiry {

@@ -3,12 +3,16 @@ import { db } from "./property";
 
 // --- Types ---
 
+// Voice presets for Google Cloud TTS
+export type VoicePreset = 'JAMES' | 'OLIVIA';
+
 export interface TourStop {
     id: string;
     tourId: string;
     title: string;
     description: string;
     image: string;
+    audioUrl?: string;  // Pre-generated TTS audio (base64 data URL)
     order: number;
 }
 
@@ -18,7 +22,8 @@ export interface VirtualTour {
     agentId: string;
     listingId?: string;
     status: string;
-    voiceUri?: string;
+    voicePreset?: VoicePreset;  // Premium Google Cloud TTS voice
+    voiceUri?: string;          // Legacy browser TTS fallback
     date: string;
     stops: TourStop[];
 }
@@ -28,6 +33,7 @@ export interface CreateTourParams {
     agentId: string;
     listingId?: string;
     status: string;
+    voicePreset?: VoicePreset;
     voiceUri?: string;
 }
 
@@ -36,6 +42,7 @@ export interface CreateTourStopParams {
     title: string;
     description: string;
     image: string;
+    audioUrl?: string;  // Pre-generated TTS audio
     order: number;
 }
 
@@ -48,7 +55,7 @@ export const listTours = api(
 
         // Get all tours
         const tourRows = db.query`
-            SELECT id, title, agent_id as "agentId", listing_id as "listingId", status, voice_uri as "voiceUri", created_at as "date"
+            SELECT id, title, agent_id as "agentId", listing_id as "listingId", status, voice_preset as "voicePreset", voice_uri as "voiceUri", created_at as "date"
             FROM virtual_tours
         `;
         for await (const row of tourRows) {
@@ -58,6 +65,7 @@ export const listTours = api(
                 agentId: row.agentId,
                 listingId: row.listingId,
                 status: row.status,
+                voicePreset: row.voicePreset as VoicePreset | undefined,
                 voiceUri: row.voiceUri,
                 date: row.date.toISOString(),
                 stops: [],
@@ -66,7 +74,7 @@ export const listTours = api(
 
         // Get all stops
         const stopRows = db.query`
-            SELECT id, tour_id as "tourId", title, description, image_url as image, "order"
+            SELECT id, tour_id as "tourId", title, description, image_url as image, audio_url as "audioUrl", "order"
             FROM tour_stops
             ORDER BY "order" ASC
         `;
@@ -79,6 +87,7 @@ export const listTours = api(
                     title: row.title,
                     description: row.description,
                     image: row.image,
+                    audioUrl: row.audioUrl,
                     order: row.order,
                 });
             }
@@ -94,11 +103,12 @@ export const createTour = api(
         const id = `vt${Math.random().toString(36).substring(2, 9)}`;
         const date = new Date().toISOString();
         const listingId = params.listingId || null;
+        const voicePreset = params.voicePreset || null;
         const voiceUri = params.voiceUri || null;
 
         await db.exec`
-            INSERT INTO virtual_tours (id, title, agent_id, listing_id, status, voice_uri)
-            VALUES (${id}, ${params.title}, ${params.agentId}, ${listingId}, ${params.status}, ${voiceUri})
+            INSERT INTO virtual_tours (id, title, agent_id, listing_id, status, voice_preset, voice_uri)
+            VALUES (${id}, ${params.title}, ${params.agentId}, ${listingId}, ${params.status}, ${voicePreset}, ${voiceUri})
         `;
 
         return {
@@ -107,6 +117,7 @@ export const createTour = api(
             agentId: params.agentId,
             listingId: params.listingId,
             status: params.status,
+            voicePreset: params.voicePreset,
             voiceUri: params.voiceUri,
             date,
             stops: [],
@@ -118,10 +129,11 @@ export const addTourStop = api(
     { expose: true, method: "POST", path: "/api/tours/:tourId/stops" },
     async (params: CreateTourStopParams): Promise<TourStop> => {
         const id = `ts${Math.random().toString(36).substring(2, 9)}`;
+        const audioUrl = params.audioUrl || null;
 
         await db.exec`
-            INSERT INTO tour_stops (id, tour_id, title, description, image_url, "order")
-            VALUES (${id}, ${params.tourId}, ${params.title}, ${params.description}, ${params.image}, ${params.order})
+            INSERT INTO tour_stops (id, tour_id, title, description, image_url, audio_url, "order")
+            VALUES (${id}, ${params.tourId}, ${params.title}, ${params.description}, ${params.image}, ${audioUrl}, ${params.order})
         `;
 
         return { ...params, id };
