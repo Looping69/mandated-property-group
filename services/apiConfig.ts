@@ -1,5 +1,10 @@
 
-const API_URL = import.meta.env.VITE_ENCORE_API_URL || (import.meta.env.PROD ? '' : 'http://localhost:4000');
+const API_URL = import.meta.env.VITE_ENCORE_API_URL ||
+    (import.meta.env.DEV ? 'http://localhost:4000' : '');
+
+if (!API_URL && import.meta.env.PROD) {
+    console.warn('VITE_ENCORE_API_URL is not defined. Falling back to current origin.');
+}
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers);
