@@ -408,11 +408,10 @@ export const VirtualTourCreator: React.FC = () => {
                     const voice = VOICE_OPTIONS[voiceKey];
                     const isSelected = selectedVoice === voiceKey;
                     return (
-                      <button
+                      <div
                         key={voiceKey}
-                        type="button"
                         onClick={() => setSelectedVoice(voiceKey)}
-                        className={`relative p-3 rounded-xl border-2 transition-all text-left ${isSelected
+                        className={`relative p-3 rounded-xl border-2 transition-all text-left cursor-pointer ${isSelected
                           ? 'border-brand-green bg-brand-green/5 shadow-md'
                           : 'border-slate-200 hover:border-slate-300 bg-white'
                           }`}
@@ -443,7 +442,7 @@ export const VirtualTourCreator: React.FC = () => {
                         >
                           <Volume2 size={10} /> {isPreviewPlaying ? 'Playing...' : 'Preview'}
                         </button>
-                      </button>
+                      </div>
                     );
                   })}
                 </div>

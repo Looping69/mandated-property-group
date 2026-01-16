@@ -11,6 +11,7 @@ export interface CreateTourParams {
     agentId: string;
     listingId?: string;
     status?: string;
+    voicePreset?: string;
     voiceUri?: string;
 }
 
@@ -18,6 +19,7 @@ export interface CreateTourStopParams {
     title: string;
     description: string;
     image: string;
+    audioUrl?: string; // Pre-generated TTS audio
     order: number;
 }
 
@@ -40,6 +42,7 @@ export const tourService = {
                 agentId: data.agentId,
                 listingId: data.listingId,
                 status: data.status || 'draft',
+                voicePreset: data.voicePreset,
                 voiceUri: data.voiceUri,
             }),
         });

@@ -8,10 +8,19 @@ const googleCredentials = secret("GoogleCloudCredentials");
 let ttsClient: TextToSpeechClient | null = null;
 const getTTSClient = () => {
     if (!ttsClient) {
-        const credentials = JSON.parse(googleCredentials());
-        ttsClient = new TextToSpeechClient({
-            credentials: credentials,
-        });
+        const creds = googleCredentials();
+        if (!creds || creds === "") {
+            throw new Error("GoogleCloudCredentials secret is not set. Please set it using 'encore secret set GoogleCloudCredentials'");
+        }
+
+        try {
+            const credentials = JSON.parse(creds);
+            ttsClient = new TextToSpeechClient({
+                credentials: credentials,
+            });
+        } catch (e) {
+            throw new Error("Failed to parse GoogleCloudCredentials secret as JSON. Ensure it is a valid service account key string.");
+        }
     }
     return ttsClient;
 };
@@ -69,51 +78,56 @@ export const getVoices = api(
 export const synthesize = api(
     { expose: true, method: "POST", path: "/api/tts/synthesize" },
     async (params: SynthesizeSpeechParams): Promise<SynthesizeSpeechResponse> => {
-        const client = getTTSClient();
-        const voiceConfig = TOUR_VOICES[params.voicePreset];
+        try {
+            const client = getTTSClient();
+            const voiceConfig = TOUR_VOICES[params.voicePreset];
 
-        if (!voiceConfig) {
-            throw new Error(`Invalid voice preset: ${params.voicePreset}`);
+            if (!voiceConfig) {
+                throw new Error(`Invalid voice preset: ${params.voicePreset}`);
+            }
+
+            // Build the request with SSML for more natural delivery
+            const ssml = buildSSML(params.text);
+
+            const request = {
+                input: { ssml },
+                voice: {
+                    languageCode: voiceConfig.languageCode,
+                    name: voiceConfig.name,
+                    ssmlGender: voiceConfig.ssmlGender,
+                },
+                audioConfig: {
+                    audioEncoding: "MP3" as const,
+                    speakingRate: params.speakingRate ?? 0.92, // Slightly slower for luxury feel
+                    pitch: params.pitch ?? -1.0, // Slightly deeper for warmth
+                    // Audio profile optimized for headphones/speakers
+                    effectsProfileId: ["headphone-class-device"],
+                },
+            };
+
+            const [response] = await client.synthesizeSpeech(request);
+
+            if (!response.audioContent) {
+                throw new Error("No audio content returned from TTS");
+            }
+
+            // Convert to base64
+            const audioBase64 = Buffer.isBuffer(response.audioContent)
+                ? response.audioContent.toString("base64")
+                : Buffer.from(response.audioContent).toString("base64");
+
+            // Estimate duration (rough: ~150 words per minute, ~5 chars per word)
+            const wordCount = params.text.split(/\s+/).length;
+            const durationMs = Math.round((wordCount / 150) * 60 * 1000);
+
+            return {
+                audioContent: audioBase64,
+                durationMs,
+            };
+        } catch (error) {
+            console.error("TTS Synthesize Error:", error);
+            throw error;
         }
-
-        // Build the request with SSML for more natural delivery
-        const ssml = buildSSML(params.text);
-
-        const request = {
-            input: { ssml },
-            voice: {
-                languageCode: voiceConfig.languageCode,
-                name: voiceConfig.name,
-                ssmlGender: voiceConfig.ssmlGender,
-            },
-            audioConfig: {
-                audioEncoding: "MP3" as const,
-                speakingRate: params.speakingRate ?? 0.92, // Slightly slower for luxury feel
-                pitch: params.pitch ?? -1.0, // Slightly deeper for warmth
-                // Audio profile optimized for headphones/speakers
-                effectsProfileId: ["headphone-class-device"],
-            },
-        };
-
-        const [response] = await client.synthesizeSpeech(request);
-
-        if (!response.audioContent) {
-            throw new Error("No audio content returned from TTS");
-        }
-
-        // Convert to base64
-        const audioBase64 = Buffer.isBuffer(response.audioContent)
-            ? response.audioContent.toString("base64")
-            : Buffer.from(response.audioContent).toString("base64");
-
-        // Estimate duration (rough: ~150 words per minute, ~5 chars per word)
-        const wordCount = params.text.split(/\s+/).length;
-        const durationMs = Math.round((wordCount / 150) * 60 * 1000);
-
-        return {
-            audioContent: audioBase64,
-            durationMs,
-        };
     }
 );
 

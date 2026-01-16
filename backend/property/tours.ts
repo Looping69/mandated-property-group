@@ -100,43 +100,53 @@ export const listTours = api(
 export const createTour = api(
     { expose: true, method: "POST", path: "/api/tours" },
     async (params: CreateTourParams): Promise<VirtualTour> => {
-        const id = `vt${Math.random().toString(36).substring(2, 9)}`;
-        const date = new Date().toISOString();
-        const listingId = params.listingId || null;
-        const voicePreset = params.voicePreset || null;
-        const voiceUri = params.voiceUri || null;
+        try {
+            const id = `vt${Math.random().toString(36).substring(2, 9)}`;
+            const date = new Date().toISOString();
+            const listingId = params.listingId || null;
+            const voicePreset = params.voicePreset || null;
+            const voiceUri = params.voiceUri || null;
 
-        await db.exec`
-            INSERT INTO virtual_tours (id, title, agent_id, listing_id, status, voice_preset, voice_uri)
-            VALUES (${id}, ${params.title}, ${params.agentId}, ${listingId}, ${params.status}, ${voicePreset}, ${voiceUri})
-        `;
+            await db.exec`
+                INSERT INTO virtual_tours (id, title, agent_id, listing_id, status, voice_preset, voice_uri)
+                VALUES (${id}, ${params.title}, ${params.agentId}, ${listingId}, ${params.status}, ${voicePreset}, ${voiceUri})
+            `;
 
-        return {
-            id,
-            title: params.title,
-            agentId: params.agentId,
-            listingId: params.listingId,
-            status: params.status,
-            voicePreset: params.voicePreset,
-            voiceUri: params.voiceUri,
-            date,
-            stops: [],
-        };
+            return {
+                id,
+                title: params.title,
+                agentId: params.agentId,
+                listingId: params.listingId,
+                status: params.status,
+                voicePreset: params.voicePreset,
+                voiceUri: params.voiceUri,
+                date,
+                stops: [],
+            };
+        } catch (error) {
+            console.error("Create Tour Error:", error);
+            throw error;
+        }
     }
 );
 
 export const addTourStop = api(
     { expose: true, method: "POST", path: "/api/tours/:tourId/stops" },
     async (params: CreateTourStopParams): Promise<TourStop> => {
-        const id = `ts${Math.random().toString(36).substring(2, 9)}`;
-        const audioUrl = params.audioUrl || null;
+        try {
+            const id = `ts${Math.random().toString(36).substring(2, 9)}`;
+            const audioUrl = params.audioUrl || null;
 
-        await db.exec`
-            INSERT INTO tour_stops (id, tour_id, title, description, image_url, audio_url, "order")
-            VALUES (${id}, ${params.tourId}, ${params.title}, ${params.description}, ${params.image}, ${audioUrl}, ${params.order})
-        `;
+            await db.exec`
+                INSERT INTO tour_stops (id, tour_id, title, description, image_url, audio_url, "order")
+                VALUES (${id}, ${params.tourId}, ${params.title}, ${params.description}, ${params.image}, ${audioUrl}, ${params.order})
+            `;
 
-        return { ...params, id };
+            return { ...params, id };
+        } catch (error) {
+            console.error("Add Tour Stop Error:", error);
+            throw error;
+        }
     }
 );
 

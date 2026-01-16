@@ -6,7 +6,7 @@ import { apiRequest } from './apiConfig';
  */
 export const generatePropertyDescription = async (features: string): Promise<string> => {
   try {
-    const response = await apiRequest<{ description: string }>('/ai/generate-description', {
+    const response = await apiRequest<{ description: string }>('/api/ai/generate-description', {
       method: 'POST',
       body: JSON.stringify({ features }),
     });
@@ -22,7 +22,7 @@ export const generatePropertyDescription = async (features: string): Promise<str
  */
 export const analyzeTourImage = async (base64Image: string, context: string): Promise<{ title: string; script: string }> => {
   try {
-    return await apiRequest<{ title: string; script: string }>('/ai/analyze-tour-image', {
+    return await apiRequest<{ title: string; script: string }>('/api/ai/analyze-tour-image', {
       method: 'POST',
       body: JSON.stringify({ image: base64Image, context }),
     });
