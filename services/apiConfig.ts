@@ -1,5 +1,21 @@
-const API_URL = (typeof process !== 'undefined' && process.env?.ENCORE_API_URL) ||
-    (import.meta.env.DEV ? 'http://localhost:4000' : '');
+const getBaseUrl = () => {
+    // Priority 1: Use the injected environment variable (via Vite define)
+    const envUrl = process.env.ENCORE_API_URL;
+    if (envUrl && envUrl.trim() !== "") return envUrl;
+
+    // Priority 2: Safe defaults for localhost (fixes local build tests)
+    if (typeof window !== "undefined") {
+        const { hostname } = window.location;
+        if (hostname === "localhost" || hostname === "127.0.0.1") {
+            return "http://localhost:4000";
+        }
+    }
+
+    // Default: relative path for production where Encore might be on the same domain
+    return "";
+};
+
+const API_URL = getBaseUrl();
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
     const headers = new Headers(options.headers);
