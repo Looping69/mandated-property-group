@@ -1,6 +1,8 @@
 import { api } from "encore.dev/api";
+import { db } from "./property";
 import { secret } from "encore.dev/config";
 import { TextToSpeechClient, protos } from "@google-cloud/text-to-speech";
+import { createHash } from "crypto";
 
 // Google Cloud credentials as a JSON string in the secret
 const googleCredentials = secret("GoogleCloudCredentials");
@@ -79,6 +81,30 @@ export const synthesize = api(
     { expose: true, method: "POST", path: "/api/tts/synthesize" },
     async (params: SynthesizeSpeechParams): Promise<SynthesizeSpeechResponse> => {
         try {
+            // 1. Generate Cache Key
+            const cacheKeySource = JSON.stringify({
+                text: params.text,
+                voice: params.voicePreset,
+                rate: params.speakingRate ?? 0.92,
+                pitch: params.pitch ?? -1.0
+            });
+            const cacheId = createHash("sha256").update(cacheKeySource).digest("hex");
+
+            // 2. Check Cache
+            const cached = await db.queryRow`
+                SELECT audio_content as "audioContent", duration_ms as "durationMs"
+                FROM tts_cache
+                WHERE id = ${cacheId}
+            `;
+
+            if (cached) {
+                return {
+                    audioContent: cached.audioContent,
+                    durationMs: cached.durationMs,
+                };
+            }
+
+            // 3. Synthesize if not cached
             const client = getTTSClient();
             const voiceConfig = TOUR_VOICES[params.voicePreset];
 
@@ -86,7 +112,6 @@ export const synthesize = api(
                 throw new Error(`Invalid voice preset: ${params.voicePreset}`);
             }
 
-            // Build the request with SSML for more natural delivery
             const ssml = buildSSML(params.text);
 
             const request = {
@@ -98,9 +123,8 @@ export const synthesize = api(
                 },
                 audioConfig: {
                     audioEncoding: "MP3" as const,
-                    speakingRate: params.speakingRate ?? 0.92, // Slightly slower for luxury feel
-                    pitch: params.pitch ?? -1.0, // Slightly deeper for warmth
-                    // Audio profile optimized for headphones/speakers
+                    speakingRate: params.speakingRate ?? 0.92,
+                    pitch: params.pitch ?? -1.0,
                     effectsProfileId: ["headphone-class-device"],
                 },
             };
@@ -111,14 +135,19 @@ export const synthesize = api(
                 throw new Error("No audio content returned from TTS");
             }
 
-            // Convert to base64
             const audioBase64 = Buffer.isBuffer(response.audioContent)
                 ? response.audioContent.toString("base64")
                 : Buffer.from(response.audioContent).toString("base64");
 
-            // Estimate duration (rough: ~150 words per minute, ~5 chars per word)
             const wordCount = params.text.split(/\s+/).length;
             const durationMs = Math.round((wordCount / 150) * 60 * 1000);
+
+            // 4. Save to Cache
+            await db.exec`
+                INSERT INTO tts_cache (id, text, voice_preset, audio_content, duration_ms)
+                VALUES (${cacheId}, ${params.text}, ${params.voicePreset}, ${audioBase64}, ${durationMs})
+                ON CONFLICT (id) DO NOTHING
+            `;
 
             return {
                 audioContent: audioBase64,
@@ -143,15 +172,35 @@ export const synthesizeBatch = api(
     }): Promise<{
         audioFiles: Array<{ stopId: string; audioContent: string; durationMs: number }>
     }> => {
-        const client = getTTSClient();
-        const voiceConfig = TOUR_VOICES[params.voicePreset];
-
-        if (!voiceConfig) {
-            throw new Error(`Invalid voice preset: ${params.voicePreset}`);
-        }
-
         const audioFiles = await Promise.all(
             params.stops.map(async (stop) => {
+                // Reuse the sanitize logic (calling local function instead of API to avoid roundtrip)
+                // For simplicity in this demo, we'll just implement the cache check here too
+
+                const cacheKeySource = JSON.stringify({
+                    text: stop.text,
+                    voice: params.voicePreset,
+                    rate: 0.92,
+                    pitch: -1.0
+                });
+                const cacheId = createHash("sha256").update(cacheKeySource).digest("hex");
+
+                const cached = await db.queryRow`
+                    SELECT audio_content as "audioContent", duration_ms as "durationMs"
+                    FROM tts_cache
+                    WHERE id = ${cacheId}
+                `;
+
+                if (cached) {
+                    return {
+                        stopId: stop.id,
+                        audioContent: cached.audioContent,
+                        durationMs: cached.durationMs,
+                    };
+                }
+
+                const client = getTTSClient();
+                const voiceConfig = TOUR_VOICES[params.voicePreset];
                 const ssml = buildSSML(stop.text);
 
                 const request = {
@@ -177,6 +226,12 @@ export const synthesizeBatch = api(
 
                 const wordCount = stop.text.split(/\s+/).length;
                 const durationMs = Math.round((wordCount / 150) * 60 * 1000);
+
+                await db.exec`
+                    INSERT INTO tts_cache (id, text, voice_preset, audio_content, duration_ms)
+                    VALUES (${cacheId}, ${stop.text}, ${params.voicePreset}, ${audioBase64}, ${durationMs})
+                    ON CONFLICT (id) DO NOTHING
+                `;
 
                 return {
                     stopId: stop.id,
