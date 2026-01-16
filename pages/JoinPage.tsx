@@ -5,16 +5,18 @@ import { ContractorRegistration } from '../components/ContractorRegistration';
 import { AgencyRegistration } from '../components/AgencyRegistration';
 import { AgentRegistration } from '../components/AgentRegistration';
 import { useData } from '../contexts/DataContext';
-import { useUser } from '../contexts/AuthContext';
+import { useUser, useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/userService';
 
 export const JoinPage: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useUser();
+    const { getToken } = useAuth();
     const { addContractor, addAgency, addAgent } = useData();
 
     const handleContractorSubmit = async (data: any) => {
         try {
+            const token = await getToken();
             const newContractor = await addContractor(data);
             if (user) {
                 await userService.syncFromClerk({
@@ -25,8 +27,8 @@ export const JoinPage: React.FC = () => {
                     lastName: user.lastName || '',
                     imageUrl: user.imageUrl,
                     contractorId: newContractor.id
-                });
-                window.location.reload();
+                }, token || undefined);
+                navigate('/maintenance-dashboard');
             }
         } catch (e) {
             console.error("Registration failed", e);
@@ -36,6 +38,7 @@ export const JoinPage: React.FC = () => {
 
     const handleAgencySubmit = async (data: any) => {
         try {
+            const token = await getToken();
             const newAgency = addAgency ? await addAgency(data) : data;
             if (user) {
                 await userService.syncFromClerk({
@@ -45,8 +48,8 @@ export const JoinPage: React.FC = () => {
                     firstName: user.firstName || '',
                     lastName: user.lastName || '',
                     imageUrl: user.imageUrl,
-                });
-                window.location.reload();
+                }, token || undefined);
+                navigate('/dashboard');
             }
         } catch (e) {
             console.error("Agency registration failed", e);
@@ -56,6 +59,7 @@ export const JoinPage: React.FC = () => {
 
     const handleAgentSubmit = async (data: any) => {
         try {
+            const token = await getToken();
             const newAgent = await addAgent(data);
             if (user) {
                 await userService.syncFromClerk({
@@ -66,8 +70,8 @@ export const JoinPage: React.FC = () => {
                     lastName: user.lastName || data.name.split(' ').slice(1).join(' '),
                     imageUrl: user.imageUrl,
                     agentId: newAgent.id
-                });
-                window.location.reload();
+                }, token || undefined);
+                navigate('/dashboard');
             }
         } catch (e) {
             console.error("Agent registration failed", e);

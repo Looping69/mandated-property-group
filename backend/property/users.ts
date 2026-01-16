@@ -138,7 +138,7 @@ export const createUser = api(
         const phone = params.phone || null;
         const imageUrl = params.imageUrl || null;
 
-        await db.exec`
+        const row = await db.queryRow`
             INSERT INTO users (
                 id, clerk_id, email, role, first_name, last_name, 
                 phone, image_url, agent_id, contractor_id,
@@ -148,23 +148,36 @@ export const createUser = api(
                 ${firstName}, ${lastName}, ${phone}, ${imageUrl},
                 ${agentId}, ${contractorId}, false, true, ${now}, ${now}
             )
+            ON CONFLICT (clerk_id) DO UPDATE SET
+                email = EXCLUDED.email,
+                role = EXCLUDED.role,
+                first_name = COALESCE(EXCLUDED.first_name, users.first_name),
+                last_name = COALESCE(EXCLUDED.last_name, users.last_name),
+                phone = COALESCE(EXCLUDED.phone, users.phone),
+                image_url = COALESCE(EXCLUDED.image_url, users.image_url),
+                agent_id = COALESCE(EXCLUDED.agent_id, users.agent_id),
+                contractor_id = COALESCE(EXCLUDED.contractor_id, users.contractor_id),
+                updated_at = EXCLUDED.updated_at
+            RETURNING id, clerk_id as "clerkId", email, role, first_name as "firstName", last_name as "lastName", phone, image_url as "imageUrl", agent_id as "agentId", contractor_id as "contractorId", is_verified as "isVerified", is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt"
         `;
 
+        if (!row) throw new Error("Failed to create/update user");
+
         return {
-            id,
-            clerkId: params.clerkId,
-            email: params.email,
-            role: params.role,
-            firstName: params.firstName,
-            lastName: params.lastName,
-            phone: params.phone,
-            imageUrl: params.imageUrl,
-            agentId: params.agentId,
-            contractorId: params.contractorId,
-            isVerified: false,
-            isActive: true,
-            createdAt: now.toISOString(),
-            updatedAt: now.toISOString(),
+            id: row.id,
+            clerkId: row.clerkId,
+            email: row.email,
+            role: row.role as UserRole,
+            firstName: row.firstName || undefined,
+            lastName: row.lastName || undefined,
+            phone: row.phone || undefined,
+            imageUrl: row.imageUrl || undefined,
+            agentId: row.agentId || undefined,
+            contractorId: row.contractorId || undefined,
+            isVerified: row.isVerified,
+            isActive: row.isActive,
+            createdAt: row.createdAt.toISOString(),
+            updatedAt: row.updatedAt.toISOString(),
         };
     }
 );

@@ -106,7 +106,7 @@ export const userService = {
         return response.users || [];
     },
 
-    // Sync user after Clerk signup - creates backend record with role data
+    // Sync user after Clerk signup - creates or updates backend record with role data
     async syncFromClerk(params: {
         clerkId: string;
         email: string;
@@ -115,14 +115,10 @@ export const userService = {
         lastName?: string;
         phone?: string;
         imageUrl?: string;
-    }): Promise<User> {
-        // First check if user already exists
-        const existing = await this.getByClerkId(params.clerkId);
-        if (existing) {
-            return existing;
-        }
-
-        // Create new user in backend
-        return this.create(params);
+        agentId?: string;
+        contractorId?: string;
+    }, token?: string): Promise<User> {
+        // The backend createUser endpoint now handles upserts using ON CONFLICT (clerk_id)
+        return this.create(params, token);
     },
 };
