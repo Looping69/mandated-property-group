@@ -1,9 +1,4 @@
-/**
- * Text-to-Speech Service
- * Integrates with Google Cloud TTS backend for premium voice synthesis
- */
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+import { apiRequest } from './apiConfig';
 
 // Voice presets matching backend configuration
 export type VoicePreset = 'JAMES' | 'OLIVIA';
@@ -56,9 +51,8 @@ export async function synthesizeSpeech(
     speakingRate?: number,
     pitch?: number
 ): Promise<SynthesizeResponse> {
-    const res = await fetch(`${API_BASE}/api/tts/synthesize`, {
+    return apiRequest<SynthesizeResponse>('/api/tts/synthesize', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             text,
             voicePreset,
@@ -66,12 +60,6 @@ export async function synthesizeSpeech(
             pitch,
         }),
     });
-
-    if (!res.ok) {
-        throw new Error(`TTS synthesis failed: ${res.statusText}`);
-    }
-
-    return res.json();
 }
 
 /**
@@ -81,20 +69,13 @@ export async function synthesizeBatch(
     stops: Array<{ id: string; text: string }>,
     voicePreset: VoicePreset = 'OLIVIA'
 ): Promise<BatchSynthesizeResponse> {
-    const res = await fetch(`${API_BASE}/api/tts/synthesize-batch`, {
+    return apiRequest<BatchSynthesizeResponse>('/api/tts/synthesize-batch', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             stops,
             voicePreset,
         }),
     });
-
-    if (!res.ok) {
-        throw new Error(`TTS batch synthesis failed: ${res.statusText}`);
-    }
-
-    return res.json();
 }
 
 /**
@@ -102,12 +83,7 @@ export async function synthesizeBatch(
  */
 export async function getAvailableVoices(): Promise<Record<VoicePreset, VoiceInfo>> {
     try {
-        const res = await fetch(`${API_BASE}/api/tts/voices`);
-        if (!res.ok) {
-            console.warn('Failed to fetch voices from server, using local defaults');
-            return VOICE_OPTIONS;
-        }
-        const data = await res.json();
+        const data = await apiRequest<{ voices: Record<VoicePreset, VoiceInfo> }>('/api/tts/voices');
         return data.voices;
     } catch {
         return VOICE_OPTIONS;

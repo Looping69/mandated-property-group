@@ -31,25 +31,25 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
             <Card className="p-6">
                 <h3 className="font-bold text-lg mb-6 flex items-center"><Settings className="mr-2 text-brand-green" /> System Status</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <div className="flex items-center gap-4 p-4 bg-brand-green/5 rounded-xl border border-brand-green/10">
+                        <div className="w-3 h-3 rounded-full bg-brand-green animate-pulse"></div>
                         <div>
                             <p className="font-bold text-slate-900 text-sm">API Server</p>
-                            <p className="text-xs text-emerald-600">Connected to Mandated Cloud</p>
+                            <p className="text-xs text-brand-green/80">Connected to Mandated Cloud</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <div className="flex items-center gap-4 p-4 bg-brand-green/5 rounded-xl border border-brand-green/10">
+                        <div className="w-3 h-3 rounded-full bg-brand-green animate-pulse"></div>
                         <div>
                             <p className="font-bold text-slate-900 text-sm">Database</p>
-                            <p className="text-xs text-emerald-600">Neon PostgreSQL Active</p>
+                            <p className="text-xs text-brand-green/80">Neon PostgreSQL Active</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
-                        <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <div className="flex items-center gap-4 p-4 bg-brand-green/5 rounded-xl border border-brand-green/10">
+                        <div className="w-3 h-3 rounded-full bg-brand-green animate-pulse"></div>
                         <div>
                             <p className="font-bold text-slate-900 text-sm">AI Services</p>
-                            <p className="text-xs text-emerald-600">Gemini Connected</p>
+                            <p className="text-xs text-brand-green/80">Gemini Connected</p>
                         </div>
                     </div>
                 </div>
@@ -96,7 +96,7 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
                         <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Primary Color</label>
                         <div className="flex items-center gap-2">
                             <div className="w-10 h-10 rounded-lg bg-brand-green shadow-sm border border-slate-200"></div>
-                            <Input value="#059669" disabled className="font-mono" />
+                            <Input value="#2ee59d" disabled className="font-mono" />
                         </div>
                     </div>
                     <div>

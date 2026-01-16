@@ -88,7 +88,7 @@ export const HomePage: React.FC<HomePageProps> = ({ onViewListingDetails }) => {
 
                         <button
                             onClick={() => navigate(searchType === 'properties' ? '/listings' : '/agents')}
-                            className="w-full bg-brand-green hover:bg-green-700 text-white font-bold py-4 rounded-lg shadow-lg transition-colors flex items-center justify-center text-lg uppercase tracking-wider"
+                            className="w-full bg-brand-green hover:bg-brand-green/90 text-white font-bold py-4 rounded-lg shadow-lg transition-colors flex items-center justify-center text-lg uppercase tracking-wider"
                         >
                             <Search size={20} className="mr-2" />
                             {searchType === 'properties' ? 'Search Properties' : 'Find Top Area Agents'}

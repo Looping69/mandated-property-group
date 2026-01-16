@@ -58,7 +58,7 @@ export const AgentDetails: React.FC<AgentDetailsProps> = ({ agentId, onBack, onV
                             </div>
 
                             <div className="space-y-3 mb-8">
-                                <button className="w-full bg-brand-green hover:bg-green-700 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all group">
+                                <button className="w-full bg-brand-green hover:bg-brand-green/90 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all group">
                                     <Phone size={18} /> Schedule Call
                                 </button>
                                 <button className="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all">

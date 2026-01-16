@@ -59,7 +59,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({ listin
                         {tour && (
                             <button
                                 onClick={() => onStartTour(tour)}
-                                className="bg-brand-green hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-transform hover:scale-105"
+                                className="bg-brand-green hover:bg-brand-green/90 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 shadow-lg transition-transform hover:scale-105"
                             >
                                 <Play size={18} fill="currentColor" /> Virtual Tour
                             </button>
@@ -108,7 +108,7 @@ export const PropertyDetailModal: React.FC<PropertyDetailModalProps> = ({ listin
                     <div className="mb-8">
                         <div className="flex gap-2">
                             {listing.isPetFriendly ? (
-                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-bold border border-green-100 italic">
+                                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-brand-green/10 text-brand-green rounded-full text-xs font-bold border border-brand-green/20 italic">
                                     <PawPrint size={14} /> Pet Friendly Property
                                 </div>
                             ) : (

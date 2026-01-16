@@ -94,7 +94,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </button>
                 <button
                   onClick={() => openSignIn()}
-                  className="flex items-center bg-brand-green hover:bg-green-700 text-white px-5 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
+                  className="flex items-center bg-brand-green hover:bg-brand-green/90 text-white px-5 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
                 >
                   <UserCircle size={18} className="mr-2" />
                   Sign In

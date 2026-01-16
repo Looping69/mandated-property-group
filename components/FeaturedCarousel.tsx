@@ -55,7 +55,7 @@ export const FeaturedCarousel: React.FC<FeaturedCarouselProps> = ({ listings, on
                     <div className="flex flex-wrap gap-4">
                         <button
                             onClick={() => onViewDetails(current)}
-                            className="bg-brand-green hover:bg-green-700 text-white font-bold py-4 px-10 rounded-xl shadow-lg transition-all hover:scale-105"
+                            className="bg-brand-green hover:bg-brand-green/90 text-white font-bold py-4 px-10 rounded-xl shadow-lg transition-all hover:scale-105"
                         >
                             View Residence
                         </button>

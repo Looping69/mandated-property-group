@@ -132,7 +132,7 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
                             <Building size={40} className="text-slate-400" />
                         </div>
                     )}
-                    <label className="absolute -bottom-2 -right-2 bg-brand-green text-white p-3 rounded-full cursor-pointer hover:bg-green-700 transition-colors shadow-lg">
+                    <label className="absolute -bottom-2 -right-2 bg-brand-green text-white p-3 rounded-full cursor-pointer hover:bg-brand-green/90 transition-colors shadow-lg">
                         <Upload size={18} />
                         <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
@@ -179,7 +179,7 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2"><FileText size={14} /> Agency Bio *</label>
                 <textarea
-                    className="w-full rounded-lg border-2 border-slate-200 p-4 text-sm focus:ring-2 focus:ring-brand-green focus:border-transparent outline-none min-h-[120px]"
+                    className="w-full rounded-lg border-2 border-slate-200 p-4 text-sm focus:ring-2 focus:ring-brand-green/50 focus:border-brand-green outline-none min-h-[120px]"
                     value={formData.description}
                     onChange={e => updateField('description', e.target.value)}
                     placeholder="Tell us about your agency's history and mission..."
@@ -227,7 +227,7 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
 
     const renderStep4 = () => (
         <div className="text-center space-y-6 animate-in fade-in zoom-in duration-300 py-8">
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-24 h-24 bg-brand-green/10 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle size={48} className="text-brand-green" />
             </div>
             <h3 className="text-3xl font-bold text-slate-900">Application Submitted!</h3>
