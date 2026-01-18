@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth } from './AuthContext';
 import { Agent, Listing, Inquiry, Review, VirtualTour, Contractor, Conveyancer, TourStop, MaintenanceRequest } from '../types';
 import { MOCK_AGENTS, MOCK_LISTINGS, MOCK_CONTRACTORS, MOCK_CONVEYANCERS, MOCK_TOURS } from '../mock/data';
 import { propertyService } from '../services/propertyService';

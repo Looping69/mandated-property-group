@@ -9,6 +9,7 @@ import { JoinPage } from './pages/JoinPage';
 import { MaintenancePage, MaintenanceDashboardPage } from './pages/MaintenancePage';
 import { ConveyancerPage } from './pages/ConveyancerPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { LoginPage } from './pages/LoginPage';
 import { PrivacyPage, TermsPage, PopiaPage } from './pages/LegalPages';
 import {
     ServiceShowPropertyPage,
@@ -56,6 +57,7 @@ export const MainRoutes = () => {
                 <Route path="/agents" element={<AgentsPage />} />
                 <Route path="/agents/:id" element={<AgentDetailsPage onViewListingDetails={handleViewListingDetails} />} />
                 <Route path="/admin" element={<AdminPage />} />
+                <Route path="/login" element={<LoginPage />} />
                 <Route path="/join/*" element={<JoinPage />} />
                 <Route path="/maintenance" element={<MaintenancePage />} />
                 <Route path="/maintenance-dashboard" element={<MaintenanceDashboardPage />} />

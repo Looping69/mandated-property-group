@@ -1,4 +1,4 @@
-import { api } from "encore.dev/api";
+import { api, APIError } from "encore.dev/api";
 import { SQLDatabase } from "encore.dev/storage/sqldb";
 import { Bucket } from "encore.dev/storage/objects";
 
@@ -36,24 +36,25 @@ interface AuthData {
     userID: string;
 }
 
-// Clerk Authentication Handler
-// This verifies the Clerk JWT in the Authorization header
+// Encore Authentication Handler
+// This verifies our domestic session token from the Authorization header
 export const auth = authHandler(async (params: AuthParams): Promise<AuthData> => {
     const token = params.authorization.replace("Bearer ", "");
     if (!token) {
-        throw new Error("missing token");
+        throw APIError.unauthenticated("missing token");
     }
 
-    // Since we are running in a demo/local environment, we'll extract the user ID
-    // In a real production environment, we should verify the JWT signature using Clerk's public keys.
-    // For local Encore dev, we'll manually parse it for now.
-    try {
-        // Simple JWT payload extraction (base64)
-        const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
-        return { userID: payload.sub };
-    } catch (e) {
-        throw new Error("invalid token");
+    const row = await db.queryRow`
+        SELECT user_id as "userID"
+        FROM sessions
+        WHERE token = ${token} AND expires_at > NOW()
+    `;
+
+    if (!row) {
+        throw APIError.unauthenticated("invalid or expired token");
     }
+
+    return { userID: row.userID };
 });
 
 export const gateway = new Gateway({

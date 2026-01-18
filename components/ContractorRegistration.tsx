@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     Wrench, Upload, CheckCircle, ArrowRight, Phone, Mail,
     MapPin, DollarSign, FileText, Award, Star, Briefcase,
@@ -9,7 +9,7 @@ import {
 import { Card, Input } from './admin/Shared';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
-import { ClerkSignUpStep } from './ClerkSignUpStep';
+import { SignUpStep } from './SignUpStep';
 import { useUser } from '../contexts/AuthContext';
 
 interface ContractorRegistrationProps {
@@ -517,7 +517,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                                     <p className="text-slate-500">Please wait while we process your registration.</p>
                                 </div>
                             ) : (
-                                <ClerkSignUpStep
+                                <SignUpStep
                                     role="CONTRACTOR"
                                     registrationData={{
                                         name: formData.name,
@@ -535,7 +535,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                                         image: formData.image,
                                     }}
                                     onSuccess={async () => {
-                                        // Save to backend after Clerk signup completes
+                                        // Save to backend after signup completes
                                         try {
                                             await onSubmit({
                                                 name: formData.name,

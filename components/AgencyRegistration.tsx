@@ -9,7 +9,7 @@ import {
 import { Card, Input } from './admin/Shared';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
-import { ClerkSignUpStep } from './ClerkSignUpStep';
+import { SignUpStep } from './SignUpStep';
 import { useUser } from '../contexts/AuthContext';
 
 interface AgencyRegistrationProps {
@@ -24,6 +24,7 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
     onDashboardRedirect
 }) => {
     const { isSignedIn } = useUser();
+    const [step, setStep] = useState(1);
 
     useEffect(() => {
         const autoSubmit = async () => {
@@ -38,7 +39,6 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
         };
         autoSubmit();
     }, [step, isSignedIn]);
-    const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -285,7 +285,7 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
                                     <p className="text-slate-500">Please wait while we process your registration.</p>
                                 </div>
                             ) : (
-                                <ClerkSignUpStep
+                                <SignUpStep
                                     role="AGENCY"
                                     registrationData={{
                                         name: formData.name,

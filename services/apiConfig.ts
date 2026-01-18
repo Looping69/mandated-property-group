@@ -15,6 +15,13 @@ const getBaseUrl = () => {
     return "";
 };
 
+export const getAuthToken = () => {
+    if (typeof window !== "undefined") {
+        return localStorage.getItem('encore_session_token');
+    }
+    return null;
+};
+
 const API_URL = getBaseUrl();
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -23,6 +30,12 @@ export async function apiRequest<T>(path: string, options: RequestInit = {}): Pr
     // Ensure Content-Type is set if not already
     if (!headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json');
+    }
+
+    // Add Authorization header if token exists
+    const token = getAuthToken();
+    if (token && !headers.has('Authorization')) {
+        headers.set('Authorization', `Bearer ${token}`);
     }
 
     const response = await fetch(`${API_URL}${path}`, {

@@ -1,37 +1,5 @@
 import { apiRequest } from './apiConfig';
-
-// --- Types ---
-
-export type UserRole = 'AGENT' | 'AGENCY' | 'CONTRACTOR';
-
-export interface User {
-    id: string;
-    clerkId: string;
-    email: string;
-    role: UserRole;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    imageUrl?: string;
-    agentId?: string;
-    contractorId?: string;
-    isVerified: boolean;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
-}
-
-export interface CreateUserParams {
-    clerkId: string;
-    email: string;
-    role: UserRole;
-    firstName?: string;
-    lastName?: string;
-    phone?: string;
-    imageUrl?: string;
-    agentId?: string;
-    contractorId?: string;
-}
+import { User, UserRole } from '../types';
 
 export interface UpdateUserParams {
     firstName?: string;
@@ -58,11 +26,9 @@ interface SuccessResponse {
 // --- Service ---
 
 export const userService = {
-    // Get user by Clerk ID (typically called after sign-in)
-    async getByClerkId(clerkId: string, token?: string): Promise<User | null> {
-        const response = await apiRequest<UserResponse>(`/api/users/clerk/${clerkId}`, {
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
+    // Get user by ID
+    async getById(id: string): Promise<User | null> {
+        const response = await apiRequest<UserResponse>(`/api/users/${id}`);
         return response.user || null;
     },
 
@@ -72,53 +38,46 @@ export const userService = {
         return response.user || null;
     },
 
-    // Create user (called after Clerk signup to sync user data)
-    async create(params: CreateUserParams, token?: string): Promise<User> {
-        return apiRequest<User>('/api/users', {
+    // Signup new user
+    async signup(params: any): Promise<{ user: User; token: string }> {
+        return apiRequest<{ user: User; token: string }>('/api/auth/signup', {
             method: 'POST',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify(params),
         });
     },
 
+    // Login user
+    async login(params: any): Promise<{ user: User; token: string }> {
+        return apiRequest<{ user: User; token: string }>('/api/auth/login', {
+            method: 'POST',
+            body: JSON.stringify(params),
+        });
+    },
+
+    // Logout user
+    async logout(): Promise<void> {
+        return apiRequest<void>('/api/auth/logout', {
+            method: 'POST',
+        });
+    },
+
     // Update user profile
-    async update(id: string, updates: UpdateUserParams, token?: string): Promise<SuccessResponse> {
+    async update(id: string, updates: UpdateUserParams): Promise<SuccessResponse> {
         return apiRequest<SuccessResponse>(`/api/users/${id}`, {
             method: 'PUT',
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify(updates),
         });
     },
 
     // Get all users (admin only)
-    async list(token?: string): Promise<User[]> {
-        const response = await apiRequest<UsersListResponse>('/api/users', {
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
+    async list(): Promise<User[]> {
+        const response = await apiRequest<UsersListResponse>('/api/users');
         return response.users || [];
     },
 
     // Get users by role
-    async getByRole(role: UserRole, token?: string): Promise<User[]> {
-        const response = await apiRequest<UsersListResponse>(`/api/users/role/${role}`, {
-            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-        });
+    async getByRole(role: UserRole): Promise<User[]> {
+        const response = await apiRequest<UsersListResponse>(`/api/users/role/${role}`);
         return response.users || [];
-    },
-
-    // Sync user after Clerk signup - creates or updates backend record with role data
-    async syncFromClerk(params: {
-        clerkId: string;
-        email: string;
-        role: UserRole;
-        firstName?: string;
-        lastName?: string;
-        phone?: string;
-        imageUrl?: string;
-        agentId?: string;
-        contractorId?: string;
-    }, token?: string): Promise<User> {
-        // The backend createUser endpoint now handles upserts using ON CONFLICT (clerk_id)
-        return this.create(params, token);
     },
 };

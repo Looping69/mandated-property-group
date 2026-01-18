@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useUser, useAuth } from '@clerk/clerk-react';
-import { userService, User } from '../services/userService';
+import { useUser, useAuth } from '../contexts/AuthContext';
+import { User } from '../types';
 
 // Extended User type including helper flags
 interface BackendUserData {
@@ -13,45 +13,26 @@ interface BackendUserData {
 }
 
 export function useBackendUser(): BackendUserData {
-    const { user: clerkUser, isLoaded, isSignedIn } = useUser();
-    const { getToken } = useAuth();
-    const [backendUser, setBackendUser] = useState<User | null>(null);
+    const { user, isLoaded, isSignedIn } = useUser();
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState<Error | null>(null);
-
-    const fetchBackendUser = async () => {
-        if (!isLoaded) return;
-        if (!isSignedIn || !clerkUser) {
-            setBackendUser(null);
-            setIsLoading(false);
-            return;
-        }
-
-        try {
-            setIsLoading(true);
-            setError(null);
-            const token = await getToken();
-            const user = await userService.getByClerkId(clerkUser.id, token || undefined);
-            setBackendUser(user);
-        } catch (err) {
-            console.error('Failed to fetch backend user:', err);
-            setError(err instanceof Error ? err : new Error('Unknown error'));
-            setBackendUser(null);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     useEffect(() => {
-        fetchBackendUser();
-    }, [clerkUser?.id, isLoaded, isSignedIn, getToken]);
+        if (isLoaded) {
+            setIsLoading(false);
+        }
+    }, [isLoaded]);
+
+    const refreshUser = async () => {
+        // In our domestic auth system, the user is already in the context
+        // But we could trigger a refresh logic if needed.
+    };
 
     return {
-        user: backendUser,
-        isLoading: isLoading || !isLoaded, // Global loading state
-        error,
-        isVerified: backendUser?.isVerified ?? false,
-        hasProfile: !!backendUser,
-        refreshUser: fetchBackendUser
+        user: user,
+        isLoading: isLoading,
+        error: null,
+        isVerified: user?.isVerified ?? false,
+        hasProfile: !!user,
+        refreshUser
     };
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Menu, X, Camera, Home, Users, Lock, UserCircle } from 'lucide-react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Menu, X, Camera, Home, Lock, UserCircle, LayoutGrid } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 import { SignedIn, SignedOut, useClerk, UserButton } from "../contexts/AuthContext";
 
 interface LayoutProps {
@@ -11,9 +11,8 @@ interface LayoutProps {
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
-  const { openSignIn } = useClerk();
+  const { openSignIn, user, getDashboardUrl } = useClerk();
   const location = useLocation();
-  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -68,15 +67,17 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-3">
               <SignedIn>
+                {user?.role === 'ADMIN' && (
+                  <Link
+                    to="/admin"
+                    className="flex items-center text-xs text-brand-green font-bold px-3 py-2 border border-brand-green/20 bg-brand-green/5 rounded-md uppercase tracking-wider mr-2"
+                  >
+                    <Lock size={12} className="mr-2" />
+                    Admin
+                  </Link>
+                )}
                 <Link
-                  to="/admin"
-                  className="flex items-center text-xs text-brand-green font-bold px-3 py-2 border border-brand-green/20 bg-brand-green/5 rounded-md uppercase tracking-wider mr-2"
-                >
-                  <Lock size={12} className="mr-2" />
-                  Admin
-                </Link>
-                <Link
-                  to="/dashboard"
+                  to={getDashboardUrl()}
                   className="flex items-center text-xs text-brand-green font-bold px-3 py-2 border border-brand-green/20 bg-brand-green/5 rounded-md uppercase tracking-wider mr-2"
                 >
                   <LayoutGrid size={12} className="mr-2" />
@@ -85,13 +86,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <UserButton />
               </SignedIn>
               <SignedOut>
-                <button
-                  onClick={() => navigate('/join')}
-                  className="flex items-center border-2 border-brand-green text-brand-green hover:bg-brand-green hover:text-white px-4 py-2 rounded-md font-bold text-sm transition-all"
-                >
-                  <Users size={16} className="mr-2" />
-                  Join Network
-                </button>
                 <button
                   onClick={() => openSignIn()}
                   className="flex items-center bg-brand-green hover:bg-brand-green/90 text-white px-5 py-2.5 rounded-md font-medium text-sm transition-colors shadow-sm"
@@ -113,53 +107,45 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         </div>
 
         {/* Mobile Nav */}
-        {isMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl z-50">
-            <div className="px-4 py-4 space-y-4 flex flex-col">
-              <NavLink to="/" label="Home" />
-              <NavLink to="/agents" label="Top Area Agents" />
-              <NavLink to="/listings" label="Listings" />
-              <NavLink to="/conveyancing" label="Conveyancers" />
-              <NavLink to="/maintenance" label="Maintenance" />
-              <SignedIn>
-                <NavLink to="/tour-creator" label="AI Tour Studio" />
-                <NavLink to="/admin" label="Admin Panel" />
-                <NavLink to="/dashboard" label="Dashboard" />
-              </SignedIn>
-              <hr className="border-gray-100" />
-
-              <SignedIn>
-                <div className="flex items-center gap-2 py-2">
-                  <UserButton /> <span className="text-sm font-bold text-slate-600">My Account</span>
-                </div>
-              </SignedIn>
-
-              <SignedOut>
-                <button
-                  onClick={() => { navigate('/join'); setIsMenuOpen(false); }}
-                  className="flex items-center border-2 border-brand-green text-brand-green justify-center px-4 py-3 rounded-md font-bold w-full mb-2"
-                >
-                  <Users size={18} className="mr-2" /> Join Our Network
-                </button>
-                <button
-                  onClick={() => openSignIn()}
-                  className="flex items-center bg-brand-green text-white justify-center px-4 py-3 rounded-md font-medium w-full"
-                >
-                  <UserCircle size={18} className="mr-2" /> Sign In / Register
-                </button>
-              </SignedOut>
+        {
+          isMenuOpen && (
+            <div className="md:hidden bg-white border-t border-gray-100 absolute w-full shadow-xl z-50">
+              <div className="px-4 py-4 space-y-4 flex flex-col">
+                <NavLink to="/" label="Home" />
+                <NavLink to="/agents" label="Top Area Agents" />
+                <NavLink to="/listings" label="Listings" />
+                <NavLink to="/conveyancing" label="Conveyancers" />
+                <NavLink to="/maintenance" label="Maintenance" />
+                <SignedIn>
+                  <NavLink to="/tour-creator" label="AI Tour Studio" />
+                  {user?.role === 'ADMIN' && <NavLink to="/admin" label="Admin Panel" />}
+                  <NavLink to={getDashboardUrl()} label="Dashboard" />
+                  <div className="flex items-center gap-2 py-2">
+                    <UserButton /> <span className="text-sm font-bold text-slate-600">My Account</span>
+                  </div>
+                </SignedIn>
+                <SignedOut>
+                  <hr className="border-gray-100" />
+                  <button
+                    onClick={() => openSignIn()}
+                    className="flex items-center bg-brand-green text-white justify-center px-4 py-3 rounded-md font-medium w-full"
+                  >
+                    <UserCircle size={18} className="mr-2" /> Sign In / Register
+                  </button>
+                </SignedOut>
+              </div>
             </div>
-          </div>
-        )}
+          )
+        }
       </header >
 
       {/* Main Content */}
-      <main className="flex-grow">
+      < main className="flex-grow" >
         {children}
-      </main>
+      </main >
 
       {/* Footer */}
-      <footer className="bg-brand-purpleDark text-white pt-16 pb-8">
+      < footer className="bg-brand-purpleDark text-white pt-16 pb-8" >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div className="col-span-1 md:col-span-1">
@@ -190,11 +176,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <li><Link to="/conveyancing" className="hover:text-brand-green">Find Your Conveyancer</Link></li>
                 <li className="hover:text-brand-green cursor-pointer">Calculators</li>
                 <li><Link to="/maintenance" className="hover:text-brand-green">Maintenance Services</Link></li>
-                <li className="font-bold flex items-center gap-2">
-                  <Link to="/join" className="hover:text-brand-green flex items-center gap-2">
-                    <Users size={14} /> Join Our Network
-                  </Link>
-                </li>
               </ul>
             </div>
 
@@ -239,9 +220,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </div>
           </div>
         </div>
-      </footer>
-    </div>
+      </footer >
+    </div >
   );
 };
-
-import { LayoutGrid } from 'lucide-react';

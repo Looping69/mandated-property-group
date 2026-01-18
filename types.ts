@@ -148,6 +148,43 @@ export enum AppView {
   PENDING_APPROVAL = 'PENDING_APPROVAL',
 }
 
-export type UserRole = 'AGENCY' | 'AGENT' | 'CONTRACTOR';
+export type UserRole = 'BROWSER' | 'AGENT' | 'AGENCY' | 'CONTRACTOR' | 'ADMIN';
+
+// Permission definitions per role
+export const PERMISSIONS = {
+  BROWSER: ['view_listings'],
+  AGENT: ['view_listings', 'create_listing', 'edit_own_listing'],
+  AGENCY: ['view_listings', 'create_listing', 'edit_any_listing', 'manage_agents'],
+  CONTRACTOR: ['view_listings', 'edit_own_profile', 'view_maintenance_requests'],
+  ADMIN: ['*'], // All permissions
+} as const;
+
+export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS][number];
+
+// Dashboard URL mapping per role
+export const DASHBOARD_URLS: Record<UserRole, string | null> = {
+  BROWSER: null,
+  AGENT: '/dashboard',
+  AGENCY: '/dashboard',
+  CONTRACTOR: '/maintenance-dashboard',
+  ADMIN: '/admin',
+};
+
+export interface User {
+  id: string;
+  email: string;
+  role: UserRole;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  imageUrl?: string;
+  agentId?: string;
+  contractorId?: string;
+  agencyId?: string; // For agents linked to an agency
+  isVerified: boolean;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 
 export type AdminView = 'OVERVIEW' | 'LISTINGS' | 'AGENTS' | 'LEADS' | 'VIRTUAL_TOURS' | 'MAINTENANCE' | 'CONVEYANCERS' | 'SETTINGS';
