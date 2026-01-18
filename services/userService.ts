@@ -8,6 +8,9 @@ export interface UpdateUserParams {
     imageUrl?: string;
     isVerified?: boolean;
     isActive?: boolean;
+    agentId?: string;
+    contractorId?: string;
+    agencyId?: string;
 }
 
 // Response types matching Encore backend

@@ -57,8 +57,8 @@ export const seedUsers = api(
 
             if (!existing) {
                 await db.exec`
-                    INSERT INTO users (id, email, password_hash, role, first_name, last_name, is_active, is_verified, created_at, updated_at)
-                    VALUES (${id}, ${user.email}, ${passwordHash}, ${user.role}, ${user.firstName}, ${user.lastName}, true, true, ${now}, ${now})
+                    INSERT INTO users (id, email, password_hash, role, first_name, last_name, agency_id, is_active, is_verified, created_at, updated_at)
+                    VALUES (${id}, ${user.email}, ${passwordHash}, ${user.role}, ${user.firstName}, ${user.lastName}, ${user.agencyId}, true, true, ${now}, ${now})
                 `;
                 results.push({ ...user, status: "created" });
             } else {

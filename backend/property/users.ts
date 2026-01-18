@@ -43,6 +43,9 @@ export interface UpdateUserParams {
     imageUrl?: string;
     isVerified?: boolean;
     isActive?: boolean;
+    agentId?: string;
+    contractorId?: string;
+    agencyId?: string;
 }
 
 // --- API Endpoints ---
@@ -298,6 +301,9 @@ export const updateUser = api(
                 image_url = COALESCE(${updates.imageUrl ?? null}, image_url),
                 is_verified = COALESCE(${updates.isVerified ?? null}, is_verified),
                 is_active = COALESCE(${updates.isActive ?? null}, is_active),
+                agent_id = COALESCE(${updates.agentId ?? null}, agent_id),
+                contractor_id = COALESCE(${updates.contractorId ?? null}, contractor_id),
+                agency_id = COALESCE(${updates.agencyId ?? null}, agency_id),
                 updated_at = ${now}
             WHERE id = ${id}
         `;

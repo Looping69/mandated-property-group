@@ -16,18 +16,12 @@ export const JoinPage: React.FC = () => {
 
     const handleContractorSubmit = async (data: any) => {
         try {
-            const token = await getToken();
             const newContractor = await addContractor(data);
             if (user) {
-                await userService.syncFromClerk({
-                    clerkId: user.id,
-                    email: user.primaryEmailAddress?.emailAddress!,
-                    role: 'CONTRACTOR',
-                    firstName: user.firstName || '',
-                    lastName: user.lastName || '',
-                    imageUrl: user.imageUrl,
-                    contractorId: newContractor.id
-                }, token || undefined);
+                await userService.update(user.id, {
+                    contractorId: newContractor.id,
+                    isVerified: true // Assuming onboarding verification for now
+                });
                 navigate('/maintenance-dashboard');
             }
         } catch (e) {
@@ -38,17 +32,11 @@ export const JoinPage: React.FC = () => {
 
     const handleAgencySubmit = async (data: any) => {
         try {
-            const token = await getToken();
             const newAgency = addAgency ? await addAgency(data) : data;
             if (user) {
-                await userService.syncFromClerk({
-                    clerkId: user.id,
-                    email: user.primaryEmailAddress?.emailAddress!,
-                    role: 'AGENCY',
-                    firstName: user.firstName || '',
-                    lastName: user.lastName || '',
-                    imageUrl: user.imageUrl,
-                }, token || undefined);
+                await userService.update(user.id, {
+                    isVerified: true
+                });
                 navigate('/dashboard');
             }
         } catch (e) {
@@ -59,18 +47,12 @@ export const JoinPage: React.FC = () => {
 
     const handleAgentSubmit = async (data: any) => {
         try {
-            const token = await getToken();
             const newAgent = await addAgent(data);
             if (user) {
-                await userService.syncFromClerk({
-                    clerkId: user.id,
-                    email: user.primaryEmailAddress?.emailAddress!,
-                    role: 'AGENT',
-                    firstName: user.firstName || data.name.split(' ')[0],
-                    lastName: user.lastName || data.name.split(' ').slice(1).join(' '),
-                    imageUrl: user.imageUrl,
-                    agentId: newAgent.id
-                }, token || undefined);
+                await userService.update(user.id, {
+                    agentId: newAgent.id,
+                    isVerified: true
+                });
                 navigate('/dashboard');
             }
         } catch (e) {
