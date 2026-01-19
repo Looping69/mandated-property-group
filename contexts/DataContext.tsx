@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { Agent, Listing, Inquiry, Review, VirtualTour, Contractor, Conveyancer, TourStop, MaintenanceRequest } from '../types';
-import { MOCK_AGENTS, MOCK_LISTINGS, MOCK_CONTRACTORS, MOCK_CONVEYANCERS, MOCK_TOURS } from '../mock/data';
 import { propertyService } from '../services/propertyService';
 import { agentService } from '../services/agentService';
 import { inquiryService } from '../services/inquiryService';
@@ -80,23 +79,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         maintenanceService.getAll(token || undefined).catch(() => []),
       ]);
 
-      setListings(listings.length > 0 ? listings : MOCK_LISTINGS);
+      setListings(listings);
       setMyListings(myListings);
-      setAgents(agents.length > 0 ? agents : MOCK_AGENTS);
+      setAgents(agents);
       setInquiries(inquiries);
-      setContractors(contractors.length > 0 ? contractors : MOCK_CONTRACTORS);
-      setConveyancers(conveyancers.length > 0 ? conveyancers : MOCK_CONVEYANCERS);
-      setVirtualTours(tours.length > 0 ? tours : MOCK_TOURS);
+      setContractors(contractors);
+      setConveyancers(conveyancers);
+      setVirtualTours(tours);
       setMaintenanceRequests(maintenance);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch data:', err);
-      setError('Connection to Mandated Cloud Backend failed. Using local cache.');
-      setListings(MOCK_LISTINGS);
-      setAgents(MOCK_AGENTS);
-      setContractors(MOCK_CONTRACTORS);
-      setConveyancers(MOCK_CONVEYANCERS);
-      setVirtualTours(MOCK_TOURS);
+      setError('Failed to load data from backend. Please try again.');
     } finally {
       setIsLoading(false);
     }

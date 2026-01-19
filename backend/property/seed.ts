@@ -1,71 +1,261 @@
 import { api } from "encore.dev/api";
 import { db } from "./property";
-import bcrypt from "bcryptjs";
-import { UserRole } from "./users";
 
-export const seedUsers = api(
-    { expose: true, method: "POST", path: "/api/admin/seed" },
-    async (): Promise<{ message: string; users: any[] }> => {
-        const passwordHash = await bcrypt.hash("password123", 10);
+/**
+ * Comprehensive database seeding with realistic South African property data
+ * Seeds: 1 agency, 3 agents, 5 listings
+ */
+export const seedDatabase = api(
+    { expose: true, method: "POST", path: "/api/admin/seed-database" },
+    async (): Promise<{ message: string; summary: any }> => {
         const now = new Date();
+        const summary = {
+            agencies: 0,
+            agents: 0,
+            listings: 0,
+        };
 
-        const usersToSeed = [
-            {
-                email: "admin@example.com",
-                firstName: "Admin",
-                lastName: "User",
-                role: "ADMIN" as UserRole,
-                agencyId: null
-            },
-            {
-                email: "agent@example.com",
-                firstName: "Agent",
-                lastName: "Smith",
-                role: "AGENT" as UserRole,
-                agencyId: null // Independent agent
-            },
-            {
-                email: "agency@example.com",
-                firstName: "Agency",
-                lastName: "Manager",
-                role: "AGENCY" as UserRole,
-                agencyId: null
-            },
-            {
-                email: "contractor@example.com",
-                firstName: "Joe",
-                lastName: "Builder",
-                role: "CONTRACTOR" as UserRole,
-                agencyId: null
-            },
-            {
-                email: "browser@example.com",
-                firstName: "John",
-                lastName: "Doe",
-                role: "BROWSER" as UserRole,
-                agencyId: null
-            }
-        ];
+        try {
+            // Ensure agent table has all required columns
+            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS title TEXT`;
+            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS image TEXT`;
+            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS sales TEXT`;
+            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS agency_id TEXT REFERENCES agencies(id) ON DELETE SET NULL`;
 
-        const results = [];
+            // 1. Create Agency
+            const agencyId = "ag_prestige_properties";
+            const agencyExists = await db.queryRow`SELECT id FROM agencies WHERE id = ${agencyId}`;
 
-        for (const user of usersToSeed) {
-            const id = user.role.toLowerCase() + "_id_" + Math.random().toString(36).substring(7);
-
-            // Check if user exists
-            const existing = await db.queryRow`SELECT id FROM users WHERE email = ${user.email}`;
-
-            if (!existing) {
+            if (!agencyExists) {
                 await db.exec`
-                    INSERT INTO users (id, email, password_hash, role, first_name, last_name, agency_id, is_active, is_verified, created_at, updated_at)
-                    VALUES (${id}, ${user.email}, ${passwordHash}, ${user.role}, ${user.firstName}, ${user.lastName}, ${user.agencyId}, true, true, ${now}, ${now})
+                    INSERT INTO agencies (
+                        id, name, registration_number, principal_name, office_address,
+                        website, phone, email, description, logo_url,
+                        service_areas, team_size, is_franchise, is_verified, created_at
+                    ) VALUES (
+                        ${agencyId},
+                        'Prestige Properties Cape Town',
+                        'PPRA-2024-8472',
+                        'Michael Thompson',
+                        '12 Kloof Street, Gardens, Cape Town, 8001',
+                        'https://prestigeproperties.co.za',
+                        '+27 21 424 5500',
+                        'info@prestigeproperties.co.za',
+                        'Cape Town''s premier luxury real estate agency, specializing in Atlantic Seaboard and City Bowl properties. Established 2010, with over R5 billion in annual sales.',
+                        'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=400&h=400&fit=crop',
+                        'Atlantic Seaboard, City Bowl, Southern Suburbs',
+                        '15-25 agents',
+                        false,
+                        true,
+                        ${now}
+                    )
                 `;
-                results.push({ ...user, status: "created" });
-            } else {
-                results.push({ ...user, status: "exists" });
+                summary.agencies++;
             }
-        }
 
-        return { message: "Seeding complete", users: results };
+            // 2. Create 3 Agents
+            const agents = [
+                {
+                    id: 'agent_sarah_mitchell',
+                    name: 'Sarah Mitchell',
+                    email: 'sarah.mitchell@prestigeproperties.co.za',
+                    phone: '+27 82 456 7890',
+                    title: 'Senior Property Consultant',
+                    image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=400&h=400&fit=crop',
+                    sales: 'R850M Sold 2024',
+                    agencyId: agencyId
+                },
+                {
+                    id: 'agent_david_van_der_merwe',
+                    name: 'David van der Merwe',
+                    email: 'david.vdm@prestigeproperties.co.za',
+                    phone: '+27 83 567 8901',
+                    title: 'Luxury Property Specialist',
+                    image: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop',
+                    sales: 'R1.2B Sold 2024',
+                    agencyId: agencyId
+                },
+                {
+                    id: 'agent_priya_naidoo',
+                    name: 'Priya Naidoo',
+                    email: 'priya.naidoo@prestigeproperties.co.za',
+                    phone: '+27 84 678 9012',
+                    title: 'Property Consultant',
+                    image: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&fit=crop',
+                    sales: 'R620M Sold 2024',
+                    agencyId: agencyId
+                }
+            ];
+
+            for (const agent of agents) {
+                const exists = await db.queryRow`SELECT id FROM agents WHERE id = ${agent.id}`;
+                if (!exists) {
+                    await db.exec`
+                        INSERT INTO agents (id, name, email, phone, title, image, sales, agency_id, created_at)
+                        VALUES (
+                            ${agent.id}, ${agent.name}, ${agent.email}, ${agent.phone},
+                            ${agent.title}, ${agent.image}, ${agent.sales}, ${agent.agencyId}, ${now}
+                        )
+                    `;
+                    summary.agents++;
+                }
+            }
+
+            // 3. Create 5 Realistic Listings
+            const listings = [
+                {
+                    id: 'listing_clifton_villa',
+                    title: 'Clifton Beachfront Villa',
+                    description: 'Spectacular 5-bedroom villa perched on the rocks of Clifton 2nd Beach. Floor-to-ceiling glass walls frame uninterrupted ocean views. Features include a 15m infinity pool, wine cellar, home cinema, and direct beach access. Architectural masterpiece by SAOTA.',
+                    price: 89500000,
+                    address: '24 Nettleton Road, Clifton, Cape Town',
+                    beds: 5,
+                    baths: 6,
+                    garage: 'Triple Garage',
+                    pool: 'private',
+                    imageUrl: 'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1200&h=800&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=800&h=600&fit=crop'
+                    ],
+                    agentId: 'agent_david_van_der_merwe',
+                    isFeatured: true,
+                    status: 'active',
+                    propertyType: 'House',
+                    isPetFriendly: true,
+                    viewingType: 'appointment',
+                    onShowDate: null
+                },
+                {
+                    id: 'listing_camps_bay_penthouse',
+                    title: 'Camps Bay Luxury Penthouse',
+                    description: 'Exclusive 3-bedroom penthouse in the prestigious The Sentinel building. Panoramic views of Camps Bay beach and the Twelve Apostles. Open-plan living with Miele appliances, underfloor heating, and two parking bays. Resort-style amenities including gym, spa, and concierge.',
+                    price: 32500000,
+                    address: 'The Sentinel, 12 Victoria Road, Camps Bay',
+                    beds: 3,
+                    baths: 3.5,
+                    garage: 'Double Secure Parking',
+                    pool: 'communal',
+                    imageUrl: 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&h=800&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=600&fit=crop'
+                    ],
+                    agentId: 'agent_sarah_mitchell',
+                    isFeatured: true,
+                    status: 'active',
+                    propertyType: 'Apartment',
+                    isPetFriendly: false,
+                    viewingType: 'appointment',
+                    onShowDate: null
+                },
+                {
+                    id: 'listing_constantia_estate',
+                    title: 'Constantia Wine Estate Manor',
+                    description: 'Historic 6-bedroom Cape Dutch manor on 5 hectares of pristine Constantia vineyards. Original features include yellowwood beams, Oregon pine floors, and a wine cellar dating to 1780. Separate 2-bedroom cottage, tennis court, and established gardens. Mountain and vineyard views.',
+                    price: 47800000,
+                    address: 'Constantia Main Road, Constantia, Cape Town',
+                    beds: 6,
+                    baths: 5,
+                    garage: 'Quad Garage + Workshop',
+                    pool: 'private',
+                    imageUrl: 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1200&h=800&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?w=800&h=600&fit=crop'
+                    ],
+                    agentId: 'agent_david_van_der_merwe',
+                    isFeatured: false,
+                    status: 'active',
+                    propertyType: 'House',
+                    isPetFriendly: true,
+                    viewingType: 'appointment',
+                    onShowDate: null
+                },
+                {
+                    id: 'listing_waterfront_apartment',
+                    title: 'V&A Waterfront Marina Apartment',
+                    description: 'Sophisticated 2-bedroom apartment in the iconic Waterfront Marina. Wake up to yacht views and Table Mountain vistas. Modern finishes, Bosch appliances, and secure parking. Walk to world-class restaurants, shops, and entertainment. Perfect lock-up-and-go lifestyle.',
+                    price: 8950000,
+                    address: 'Waterfront Marina, V&A Waterfront, Cape Town',
+                    beds: 2,
+                    baths: 2,
+                    garage: 'Single Secure Parking',
+                    pool: 'communal',
+                    imageUrl: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=1200&h=800&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&h=600&fit=crop'
+                    ],
+                    agentId: 'agent_priya_naidoo',
+                    isFeatured: false,
+                    status: 'active',
+                    propertyType: 'Apartment',
+                    isPetFriendly: true,
+                    viewingType: 'on_show',
+                    onShowDate: 'Sunday 14:00 - 16:00'
+                },
+                {
+                    id: 'listing_sea_point_modern',
+                    title: 'Sea Point Contemporary Home',
+                    description: 'Newly renovated 4-bedroom home in prime Sea Point location. Smart home automation, solar panels, and borehole. Designer kitchen with Caesarstone counters, stacking doors to entertainer\'s patio with built-in braai. Walking distance to promenade and beaches.',
+                    price: 15750000,
+                    address: '45 High Level Road, Sea Point, Cape Town',
+                    beds: 4,
+                    baths: 3,
+                    garage: 'Double Garage',
+                    pool: 'none',
+                    imageUrl: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&h=800&fit=crop',
+                    images: [
+                        'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=800&h=600&fit=crop',
+                        'https://images.unsplash.com/photo-1600573472591-ee6b68d14c68?w=800&h=600&fit=crop'
+                    ],
+                    agentId: 'agent_sarah_mitchell',
+                    isFeatured: false,
+                    status: 'active',
+                    propertyType: 'House',
+                    isPetFriendly: true,
+                    viewingType: 'on_show',
+                    onShowDate: 'Saturday 10:00 - 12:00'
+                }
+            ];
+
+            for (const listing of listings) {
+                const exists = await db.queryRow`SELECT id FROM listings WHERE id = ${listing.id}`;
+                if (!exists) {
+                    await db.exec`
+                        INSERT INTO listings (
+                            id, title, description, price, address, beds, baths, garage,
+                            pool, image_url, images, agent_id, is_featured, status,
+                            property_type, is_pet_friendly, viewing_type, on_show_date, created_at
+                        ) VALUES (
+                            ${listing.id}, ${listing.title}, ${listing.description}, ${listing.price},
+                            ${listing.address}, ${listing.beds}, ${listing.baths}, ${listing.garage},
+                            ${listing.pool}, ${listing.imageUrl}, ${listing.images}, ${listing.agentId},
+                            ${listing.isFeatured}, ${listing.status}, ${listing.propertyType},
+                            ${listing.isPetFriendly}, ${listing.viewingType}, ${listing.onShowDate}, ${now}
+                        )
+                    `;
+                    summary.listings++;
+                }
+            }
+
+            return {
+                message: "Database seeded successfully!",
+                summary: {
+                    ...summary,
+                    note: "Existing records were skipped to prevent duplicates"
+                }
+            };
+
+        } catch (error) {
+            console.error("Seeding error:", error);
+            throw error;
+        }
     }
 );
