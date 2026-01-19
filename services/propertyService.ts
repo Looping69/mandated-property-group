@@ -15,6 +15,14 @@ export const propertyService = {
         return response.listings || [];
     },
 
+    // List user's own listings (dashboard)
+    async listMy(token?: string): Promise<Listing[]> {
+        const response = await apiRequest<ListingsListResponse>('/api/my-properties', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        return response.listings || [];
+    },
+
     // Create a new listing
     async create(listing: Partial<Listing>, token?: string): Promise<Listing> {
         return apiRequest<Listing>('/api/properties', {

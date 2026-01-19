@@ -18,6 +18,7 @@ import { maintenanceService } from '../services/maintenanceService';
 interface DataContextType {
   agents: Agent[];
   listings: Listing[];
+  myListings: Listing[];
   inquiries: Inquiry[];
   virtualTours: VirtualTour[];
   contractors: Contractor[];
@@ -55,6 +56,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { getToken, isSignedIn } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [listings, setListings] = useState<Listing[]>([]);
+  const [myListings, setMyListings] = useState<Listing[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [virtualTours, setVirtualTours] = useState<VirtualTour[]>([]);
   const [contractors, setContractors] = useState<Contractor[]>([]);
@@ -67,8 +69,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const token = isSignedIn ? await getToken() : undefined;
-      const [listings, agents, inquiries, contractors, conveyancers, tours, maintenance] = await Promise.all([
+      const [listings, myListings, agents, inquiries, contractors, conveyancers, tours, maintenance] = await Promise.all([
         propertyService.list(token || undefined).catch(() => []),
+        token ? propertyService.listMy(token).catch(() => []) : Promise.resolve([]),
         agentService.list(token || undefined).catch(() => []),
         inquiryService.list(token || undefined).catch(() => []),
         contractorService.list(token || undefined).catch(() => []),
@@ -78,6 +81,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ]);
 
       setListings(listings.length > 0 ? listings : MOCK_LISTINGS);
+      setMyListings(myListings);
       setAgents(agents.length > 0 ? agents : MOCK_AGENTS);
       setInquiries(inquiries);
       setContractors(contractors.length > 0 ? contractors : MOCK_CONTRACTORS);
@@ -325,7 +329,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <DataContext.Provider value={{
-      agents, listings, inquiries, virtualTours, contractors, conveyancers, maintenanceRequests,
+      agents, listings, myListings, inquiries, virtualTours, contractors, conveyancers, maintenanceRequests,
       isLoading, error,
       addListing, updateListing, deleteListing,
       addAgent, updateAgent, deleteAgent, addReview,

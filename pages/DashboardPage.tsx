@@ -7,7 +7,7 @@ import { SignedIn } from '../contexts/AuthContext';
 
 export const DashboardPage: React.FC = () => {
     const navigate = useNavigate();
-    const { agents, listings, virtualTours, inquiries, addListing, updateListing, deleteListing } = useData();
+    const { agents, listings, myListings, virtualTours, inquiries, addListing, updateListing, deleteListing } = useData();
     const { user: backendUser } = useBackendUser();
 
     const agentId = backendUser?.agentId || 'a1';
@@ -17,7 +17,7 @@ export const DashboardPage: React.FC = () => {
         <SignedIn>
             <AgentDashboard
                 currentAgent={currentAgent}
-                listings={listings}
+                listings={myListings}
                 virtualTours={virtualTours}
                 inquiries={inquiries}
                 addListing={addListing}

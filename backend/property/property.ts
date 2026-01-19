@@ -34,6 +34,10 @@ interface AuthParams {
 
 interface AuthData {
     userID: string;
+    role: string;
+    agentID?: string;
+    agencyID?: string;
+    contractorID?: string;
 }
 
 // Encore Authentication Handler
@@ -45,16 +49,28 @@ export const auth = authHandler(async (params: AuthParams): Promise<AuthData> =>
     }
 
     const row = await db.queryRow`
-        SELECT user_id as "userID"
-        FROM sessions
-        WHERE token = ${token} AND expires_at > NOW()
+        SELECT 
+            s.user_id as "userID",
+            u.role as "role",
+            u.agent_id as "agentID",
+            u.agency_id as "agencyID",
+            u.contractor_id as "contractorID"
+        FROM sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.token = ${token} AND s.expires_at > NOW()
     `;
 
     if (!row) {
         throw APIError.unauthenticated("invalid or expired token");
     }
 
-    return { userID: row.userID };
+    return {
+        userID: row.userID,
+        role: row.role,
+        agentID: row.agentID || undefined,
+        agencyID: row.agencyID || undefined,
+        contractorID: row.contractorID || undefined
+    };
 });
 
 export const gateway = new Gateway({
@@ -176,6 +192,61 @@ export const listProperties = api(
     }
 );
 
+// Dashboard / Private Properties
+export const listMyProperties = api(
+    { expose: true, auth: true, method: "GET", path: "/api/my-properties" },
+    async (params: { authorization: Header<"Authorization"> }): Promise<{ listings: Listing[] }> => {
+        const authData = await getUserFromHeader(params.authorization);
+        const listings: Listing[] = [];
+
+        let query;
+        if (authData.role === 'ADMIN') {
+            query = db.query`
+                SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", viewing_type as "viewingType", on_show_date as "onShowDate"
+                FROM listings
+            `;
+        } else if (authData.role === 'AGENCY' && authData.agencyID) {
+            query = db.query`
+                SELECT l.id, l.title, l.price, l.address, l.description, l.beds, l.baths, l.garage, l.pool, l.image_url as image, l.images, l.agent_id as "agentId", l.is_featured as "isFeatured", l.status, l.is_pet_friendly as "isPetFriendly", l.viewing_type as "viewingType", l.on_show_date as "onShowDate"
+                FROM listings l
+                JOIN agents a ON l.agent_id = a.id
+                WHERE a.agency_id = ${authData.agencyID}
+            `;
+        } else if (authData.role === 'AGENT' && authData.agentID) {
+            query = db.query`
+                SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", viewing_type as "viewingType", on_show_date as "onShowDate"
+                FROM listings
+                WHERE agent_id = ${authData.agentID}
+            `;
+        } else {
+            return { listings: [] };
+        }
+
+        for await (const row of query) {
+            listings.push({
+                id: row.id,
+                title: row.title,
+                price: Number(row.price),
+                address: row.address,
+                description: row.description,
+                beds: row.beds,
+                baths: Number(row.baths),
+                garage: row.garage || "None",
+                pool: row.pool || "none",
+                image: row.image,
+                images: row.images || [],
+                agentId: row.agentId,
+                isFeatured: row.isFeatured,
+                status: row.status,
+                isPetFriendly: row.isPetFriendly,
+                viewingType: row.viewingType || 'appointment',
+                onShowDate: row.onShowDate,
+            });
+        }
+        return { listings };
+    }
+);
+
 export const getProperty = api(
     { expose: true, method: "GET", path: "/api/properties/:id" },
     async ({ id }: { id: string }): Promise<{ listing?: Listing }> => {
@@ -213,21 +284,69 @@ export const getProperty = api(
 
 export const createProperty = api(
     { expose: true, auth: true, method: "POST", path: "/api/properties" },
-    async (params: CreateListingParams): Promise<Listing> => {
+    async (params: CreateListingParams & { authorization: Header<"Authorization"> }): Promise<Listing> => {
+        const authData = await getUserFromHeader(params.authorization);
+
+        // Security Check
+        if (authData.role !== 'ADMIN') {
+            if (authData.role === 'AGENT') {
+                if (params.agentId !== authData.agentID) throw APIError.permissionDenied("can only create for yourself");
+            } else if (authData.role === 'AGENCY') {
+                const agent = await db.queryRow`SELECT agency_id as "agencyId" FROM agents WHERE id = ${params.agentId}`;
+                if (!agent || agent.agencyId !== authData.agencyID) throw APIError.permissionDenied("agent not in your agency");
+            } else {
+                throw APIError.permissionDenied("unauthorized role");
+            }
+        }
+
         const id = `p_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
         await db.exec`
             INSERT INTO listings (id, title, price, address, description, beds, baths, garage, pool, image_url, images, agent_id, is_featured, status, is_pet_friendly, viewing_type, on_show_date)
             VALUES (${id}, ${params.title}, ${params.price}, ${params.address}, ${params.description}, ${params.beds}, ${params.baths}, ${params.garage}, ${params.pool}, ${params.image}, ${params.images}, ${params.agentId}, ${params.isFeatured}, ${params.status}, ${params.isPetFriendly}, ${params.viewingType}, ${params.onShowDate})
         `;
-        return { ...params, id };
+        return {
+            id,
+            title: params.title,
+            price: params.price,
+            address: params.address,
+            description: params.description,
+            beds: params.beds,
+            baths: params.baths,
+            garage: params.garage,
+            pool: params.pool,
+            image: params.image,
+            images: params.images,
+            agentId: params.agentId,
+            isFeatured: params.isFeatured,
+            status: params.status,
+            isPetFriendly: params.isPetFriendly,
+            viewingType: params.viewingType,
+            onShowDate: params.onShowDate
+        };
     }
 );
 
 export const updateProperty = api(
     { expose: true, auth: true, method: "PUT", path: "/api/properties/:id" },
-    async ({ id, ...updates }: { id: string } & Partial<CreateListingParams>): Promise<Listing> => {
-        // Implementation of Optimized Dynamic SQL Update (Single Round-trip)
-        // Using COALESCE/ISNULL pattern to update only provided fields
+    async (params: { id: string; authorization: Header<"Authorization"> } & Partial<CreateListingParams>): Promise<Listing> => {
+        const { id, authorization, ...updates } = params;
+        const authData = await getUserFromHeader(authorization);
+
+        // Ownership Check
+        if (authData.role !== 'ADMIN') {
+            const existing = await db.queryRow`SELECT agent_id as "agentId" FROM listings WHERE id = ${id}`;
+            if (!existing) throw APIError.notFound("listing not found");
+
+            if (authData.role === 'AGENT') {
+                if (existing.agentId !== authData.agentID) throw APIError.permissionDenied("not your listing");
+            } else if (authData.role === 'AGENCY') {
+                const agentAgency = await db.queryRow`SELECT agency_id as "agencyId" FROM agents WHERE id = ${existing.agentId}`;
+                if (!agentAgency || agentAgency.agencyId !== authData.agencyID) throw APIError.permissionDenied("not your agency's listing");
+            } else {
+                throw APIError.permissionDenied("unauthorized role");
+            }
+        }
+
         await db.exec`
             UPDATE listings 
             SET 
@@ -258,8 +377,24 @@ export const updateProperty = api(
 
 export const deleteProperty = api(
     { expose: true, auth: true, method: "DELETE", path: "/api/properties/:id" },
-    async ({ id }: { id: string }): Promise<void> => {
-        await db.exec`DELETE FROM listings WHERE id = ${id}`;
+    async (params: { id: string; authorization: Header<"Authorization"> }): Promise<void> => {
+        const authData = await getUserFromHeader(params.authorization);
+
+        // Ownership Check
+        if (authData.role !== 'ADMIN') {
+            const existing = await db.queryRow`SELECT agent_id as "agentId" FROM listings WHERE id = ${params.id}`;
+            if (!existing) throw APIError.notFound("listing not found");
+
+            if (authData.role === 'AGENT') {
+                if (existing.agentId !== authData.agentID) throw APIError.permissionDenied("not your listing");
+            } else if (authData.role === 'AGENCY') {
+                const agentAgency = await db.queryRow`SELECT agency_id as "agencyId" FROM agents WHERE id = ${existing.agentId}`;
+                if (!agentAgency || agentAgency.agencyId !== authData.agencyID) throw APIError.permissionDenied("not your agency's listing");
+            } else {
+                throw APIError.permissionDenied("unauthorized role");
+            }
+        }
+        await db.exec`DELETE FROM listings WHERE id = ${params.id}`;
     }
 );
 
@@ -268,11 +403,28 @@ export const deleteProperty = api(
 
 // Inquiries
 export const listInquiries = api(
-    { expose: true, method: "GET", path: "/api/inquiries" },
-    async (): Promise<{ inquiries: Inquiry[] }> => {
+    { expose: true, auth: true, method: "GET", path: "/api/inquiries" },
+    async (params: { authorization: Header<"Authorization"> }): Promise<{ inquiries: Inquiry[] }> => {
+        const authData = await getUserFromHeader(params.authorization);
         const inquiries: Inquiry[] = [];
-        const rows = db.query`SELECT id, listing_id as "listingId", agent_id as "agentId", customer_name as "customerName", customer_email as "customerEmail", message, status, created_at as "date" FROM inquiries`;
-        for await (const row of rows) {
+
+        let query;
+        if (authData.role === 'ADMIN') {
+            query = db.query`SELECT id, listing_id as "listingId", agent_id as "agentId", customer_name as "customerName", customer_email as "customerEmail", message, status, created_at as "date" FROM inquiries`;
+        } else if (authData.role === 'AGENCY' && authData.agencyID) {
+            query = db.query`
+                SELECT i.id, i.listing_id as "listingId", i.agent_id as "agentId", i.customer_name as "customerName", i.customer_email as "customerEmail", i.message, i.status, i.created_at as "date"
+                FROM inquiries i
+                JOIN agents a ON i.agent_id = a.id
+                WHERE a.agency_id = ${authData.agencyID}
+            `;
+        } else if (authData.role === 'AGENT' && authData.agentID) {
+            query = db.query`SELECT id, listing_id as "listingId", agent_id as "agentId", customer_name as "customerName", customer_email as "customerEmail", message, status, created_at as "date" FROM inquiries WHERE agent_id = ${authData.agentID}`;
+        } else {
+            return { inquiries: [] };
+        }
+
+        for await (const row of query) {
             inquiries.push({
                 id: row.id,
                 listingId: row.listingId,
@@ -287,6 +439,29 @@ export const listInquiries = api(
         return { inquiries };
     }
 );
+
+async function getUserFromHeader(authorization: string): Promise<AuthData> {
+    const token = authorization.replace("Bearer ", "");
+    const row = await db.queryRow`
+        SELECT 
+            s.user_id as "userID",
+            u.role as "role",
+            u.agent_id as "agentID",
+            u.agency_id as "agencyID",
+            u.contractor_id as "contractorID"
+        FROM sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.token = ${token} AND s.expires_at > NOW()
+    `;
+    if (!row) throw APIError.unauthenticated("invalid session");
+    return {
+        userID: row.userID,
+        role: row.role,
+        agentID: row.agentID || undefined,
+        agencyID: row.agencyID || undefined,
+        contractorID: row.contractorID || undefined
+    };
+}
 
 export const createInquiry = api(
     { expose: true, method: "POST", path: "/api/inquiries" },
