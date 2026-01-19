@@ -1,9 +1,15 @@
-const getBaseUrl = () => {
-    // Priority 1: Use the injected environment variable (via Vite define)
+/**
+ * API Configuration
+ * 
+ * Centralized API request handling with auth token management.
+ */
+
+const getBaseUrl = (): string => {
+    // Priority 1: Environment variable
     const envUrl = process.env.ENCORE_API_URL;
     if (envUrl && envUrl.trim() !== "") return envUrl;
 
-    // Priority 2: Safe defaults for localhost (fixes local build tests)
+    // Priority 2: Localhost development
     if (typeof window !== "undefined") {
         const { hostname } = window.location;
         if (hostname === "localhost" || hostname === "127.0.0.1") {
@@ -11,50 +17,70 @@ const getBaseUrl = () => {
         }
     }
 
-    // Default: relative path for production where Encore might be on the same domain
+    // Default: relative path for production
     return "";
-};
-
-export const getAuthToken = () => {
-    if (typeof window !== "undefined") {
-        return localStorage.getItem('encore_session_token');
-    }
-    return null;
 };
 
 const API_URL = getBaseUrl();
 
-export async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+/**
+ * Get the stored auth token
+ */
+export function getAuthToken(): string | null {
+    if (typeof window !== "undefined") {
+        return localStorage.getItem('auth_token');
+    }
+    return null;
+}
+
+/**
+ * Make an API request with automatic auth header injection
+ */
+export async function apiRequest<T>(
+    path: string,
+    options: RequestInit = {}
+): Promise<T> {
     const headers = new Headers(options.headers);
 
-    // Ensure Content-Type is set if not already
+    // Set Content-Type if not already set
     if (!headers.has('Content-Type')) {
         headers.set('Content-Type', 'application/json');
     }
 
-    // Add Authorization header if token exists
+    // Add Authorization header if we have a token
     const token = getAuthToken();
     if (token && !headers.has('Authorization')) {
         headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const response = await fetch(`${API_URL}${path}`, {
+    const url = `${API_URL}${path}`;
+
+    const response = await fetch(url, {
         ...options,
         headers,
     });
 
+    // Handle errors
     if (!response.ok) {
-        let errorMsg = `API Request failed: ${response.statusText}`;
+        let errorMsg = `Request failed: ${response.status} ${response.statusText}`;
         try {
             const error = await response.json();
-            errorMsg = error.message || errorMsg;
+            errorMsg = error.message || error.error || errorMsg;
         } catch {
             // No JSON body
         }
         throw new Error(errorMsg);
     }
 
-    // Handle empty responses (e.g., DELETE operations)
+    // Handle empty responses
     const text = await response.text();
-    return text ? JSON.parse(text) : ({} as T);
+    if (!text) {
+        return {} as T;
+    }
+
+    try {
+        return JSON.parse(text);
+    } catch {
+        return text as unknown as T;
+    }
 }

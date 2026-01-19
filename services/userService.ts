@@ -1,5 +1,32 @@
-import { apiRequest } from './apiConfig';
+import { apiRequest, getAuthToken } from './apiConfig';
 import { User, UserRole } from '../types';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface SignupParams {
+    email: string;
+    password: string;
+    firstName: string;
+    lastName: string;
+    role: UserRole;
+    phone?: string;
+    imageUrl?: string;
+    agentId?: string;
+    contractorId?: string;
+    agencyId?: string;
+}
+
+export interface LoginParams {
+    email: string;
+    password: string;
+}
+
+export interface AuthResponse {
+    user: User;
+    token: string;
+}
 
 export interface UpdateUserParams {
     firstName?: string;
@@ -13,74 +40,109 @@ export interface UpdateUserParams {
     agencyId?: string;
 }
 
-// Response types matching Encore backend
-interface UserResponse {
-    user?: User;
-}
-
-interface UsersListResponse {
-    users: User[];
-}
-
-interface SuccessResponse {
-    success: boolean;
-}
-
-// --- Service ---
+// ============================================================================
+// AUTH SERVICE
+// ============================================================================
 
 export const userService = {
-    // Get user by ID
-    async getById(id: string): Promise<User | null> {
-        const response = await apiRequest<UserResponse>(`/api/users/${id}`);
-        return response.user || null;
-    },
-
-    // Get user by email
-    async getByEmail(email: string): Promise<User | null> {
-        const response = await apiRequest<UserResponse>(`/api/users/email/${encodeURIComponent(email)}`);
-        return response.user || null;
-    },
-
-    // Signup new user
-    async signup(params: any): Promise<{ user: User; token: string }> {
-        return apiRequest<{ user: User; token: string }>('/api/auth/signup', {
+    /**
+     * Sign up a new user
+     */
+    async signup(params: SignupParams): Promise<AuthResponse> {
+        return apiRequest<AuthResponse>('/api/auth/signup', {
             method: 'POST',
             body: JSON.stringify(params),
         });
     },
 
-    // Login user
-    async login(params: any): Promise<{ user: User; token: string }> {
-        return apiRequest<{ user: User; token: string }>('/api/auth/login', {
+    /**
+     * Log in an existing user
+     */
+    async login(params: LoginParams): Promise<AuthResponse> {
+        return apiRequest<AuthResponse>('/api/auth/login', {
             method: 'POST',
             body: JSON.stringify(params),
         });
     },
 
-    // Logout user
+    /**
+     * Validate current session and get user
+     */
+    async getCurrentUser(): Promise<User | null> {
+        const token = getAuthToken();
+        if (!token) return null;
+
+        try {
+            const response = await apiRequest<{ user: User | null }>('/api/auth/me', {
+                method: 'POST',
+                body: JSON.stringify({ token }),
+            });
+            return response.user;
+        } catch {
+            return null;
+        }
+    },
+
+    /**
+     * Log out current user
+     */
     async logout(): Promise<void> {
-        return apiRequest<void>('/api/auth/logout', {
-            method: 'POST',
-        });
+        const token = getAuthToken();
+        if (token) {
+            try {
+                await apiRequest('/api/auth/logout', {
+                    method: 'POST',
+                    body: JSON.stringify({ token }),
+                });
+            } catch {
+                // Ignore errors on logout
+            }
+        }
     },
 
-    // Update user profile
-    async update(id: string, updates: UpdateUserParams): Promise<SuccessResponse> {
-        return apiRequest<SuccessResponse>(`/api/users/${id}`, {
+    // ========================================================================
+    // USER MANAGEMENT
+    // ========================================================================
+
+    /**
+     * Get user by ID
+     */
+    async getById(id: string): Promise<User | null> {
+        const response = await apiRequest<{ user: User | null }>(`/api/users/${id}`);
+        return response.user;
+    },
+
+    /**
+     * Get user by email
+     */
+    async getByEmail(email: string): Promise<User | null> {
+        const response = await apiRequest<{ user: User | null }>(`/api/users/email/${encodeURIComponent(email)}`);
+        return response.user;
+    },
+
+    /**
+     * Update user profile
+     */
+    async update(id: string, updates: UpdateUserParams): Promise<{ success: boolean }> {
+        return apiRequest<{ success: boolean }>(`/api/users/${id}`, {
             method: 'PUT',
             body: JSON.stringify(updates),
         });
     },
 
-    // Get all users (admin only)
+    /**
+     * List all users
+     */
     async list(): Promise<User[]> {
-        const response = await apiRequest<UsersListResponse>('/api/users');
+        const response = await apiRequest<{ users: User[] }>('/api/users');
         return response.users || [];
     },
 
-    // Get users by role
+    /**
+     * Get users by role
+     */
     async getByRole(role: UserRole): Promise<User[]> {
-        const response = await apiRequest<UsersListResponse>(`/api/users/role/${role}`);
+        const response = await apiRequest<{ users: User[] }>(`/api/users/role/${role}`);
         return response.users || [];
     },
 };

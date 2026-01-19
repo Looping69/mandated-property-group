@@ -1,7 +1,10 @@
-import { api } from "encore.dev/api";
+import { api, APIError } from "encore.dev/api";
 import { db } from "./property";
+import bcrypt from "bcryptjs";
 
-// --- Types ---
+// ============================================================================
+// TYPES
+// ============================================================================
 
 export type UserRole = 'BROWSER' | 'AGENT' | 'AGENCY' | 'CONTRACTOR' | 'ADMIN';
 
@@ -15,28 +18,274 @@ export interface User {
     imageUrl?: string;
     agentId?: string;
     contractorId?: string;
-    agencyId?: string; // For agents linked to an agency
+    agencyId?: string;
     isVerified: boolean;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;
 }
 
-export interface CreateUserParams {
+// ============================================================================
+// AUTH ENDPOINTS
+// ============================================================================
+
+interface SignupParams {
     email: string;
-    password?: string;
+    password: string;
+    firstName: string;
+    lastName: string;
     role: UserRole;
-    firstName?: string;
-    lastName?: string;
     phone?: string;
     imageUrl?: string;
-    // Link to role-specific entity
     agentId?: string;
     contractorId?: string;
     agencyId?: string;
 }
 
-export interface UpdateUserParams {
+interface LoginParams {
+    email: string;
+    password: string;
+}
+
+interface AuthResponse {
+    user: User;
+    token: string;
+}
+
+// Generate unique ID
+function generateId(prefix: string): string {
+    return `${prefix}_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
+}
+
+// Generate session token
+function generateToken(): string {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 64; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+}
+
+/**
+ * Sign up a new user
+ */
+export const signup = api(
+    { expose: true, method: "POST", path: "/api/auth/signup" },
+    async (params: SignupParams): Promise<AuthResponse> => {
+        // Validate required fields
+        if (!params.email || !params.email.includes('@')) {
+            throw APIError.invalidArgument("Valid email is required");
+        }
+        if (!params.password || params.password.length < 8) {
+            throw APIError.invalidArgument("Password must be at least 8 characters");
+        }
+        if (!params.firstName || !params.lastName) {
+            throw APIError.invalidArgument("First name and last name are required");
+        }
+
+        // Check if user already exists
+        const existing = await db.queryRow`
+            SELECT id FROM users WHERE email = ${params.email}
+        `;
+        if (existing) {
+            throw APIError.alreadyExists("An account with this email already exists");
+        }
+
+        // Hash password
+        const passwordHash = await bcrypt.hash(params.password, 12);
+        const userId = generateId('u');
+        const now = new Date();
+
+        // Insert user
+        await db.exec`
+            INSERT INTO users (
+                id, email, password_hash, role, 
+                first_name, last_name, phone, image_url,
+                agent_id, contractor_id, agency_id,
+                is_verified, is_active, created_at, updated_at
+            ) VALUES (
+                ${userId}, ${params.email}, ${passwordHash}, ${params.role},
+                ${params.firstName}, ${params.lastName}, ${params.phone || null}, ${params.imageUrl || null},
+                ${params.agentId || null}, ${params.contractorId || null}, ${params.agencyId || null},
+                false, true, ${now}, ${now}
+            )
+        `;
+
+        // Create session
+        const token = generateToken();
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+        await db.exec`
+            INSERT INTO sessions (token, user_id, expires_at)
+            VALUES (${token}, ${userId}, ${expiresAt})
+        `;
+
+        const user: User = {
+            id: userId,
+            email: params.email,
+            role: params.role,
+            firstName: params.firstName,
+            lastName: params.lastName,
+            phone: params.phone,
+            imageUrl: params.imageUrl,
+            agentId: params.agentId,
+            contractorId: params.contractorId,
+            agencyId: params.agencyId,
+            isVerified: false,
+            isActive: true,
+            createdAt: now.toISOString(),
+            updatedAt: now.toISOString(),
+        };
+
+        return { user, token };
+    }
+);
+
+/**
+ * Log in an existing user
+ */
+export const login = api(
+    { expose: true, method: "POST", path: "/api/auth/login" },
+    async (params: LoginParams): Promise<AuthResponse> => {
+        if (!params.email || !params.password) {
+            throw APIError.invalidArgument("Email and password are required");
+        }
+
+        // Find user by email
+        const row = await db.queryRow`
+            SELECT 
+                id, email, password_hash, role,
+                first_name, last_name, phone, image_url,
+                agent_id, contractor_id, agency_id,
+                is_verified, is_active, created_at, updated_at
+            FROM users
+            WHERE email = ${params.email}
+        `;
+
+        if (!row) {
+            throw APIError.unauthenticated("Invalid email or password");
+        }
+
+        if (!row.password_hash) {
+            throw APIError.unauthenticated("Invalid email or password");
+        }
+
+        // Verify password
+        const validPassword = await bcrypt.compare(params.password, row.password_hash);
+        if (!validPassword) {
+            throw APIError.unauthenticated("Invalid email or password");
+        }
+
+        // Check if user is active
+        if (!row.is_active) {
+            throw APIError.permissionDenied("Your account has been deactivated");
+        }
+
+        // Create new session
+        const token = generateToken();
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+        await db.exec`
+            INSERT INTO sessions (token, user_id, expires_at)
+            VALUES (${token}, ${row.id}, ${expiresAt})
+        `;
+
+        const user: User = {
+            id: row.id,
+            email: row.email,
+            role: row.role as UserRole,
+            firstName: row.first_name,
+            lastName: row.last_name,
+            phone: row.phone,
+            imageUrl: row.image_url,
+            agentId: row.agent_id,
+            contractorId: row.contractor_id,
+            agencyId: row.agency_id,
+            isVerified: row.is_verified,
+            isActive: row.is_active,
+            createdAt: row.created_at.toISOString(),
+            updatedAt: row.updated_at.toISOString(),
+        };
+
+        return { user, token };
+    }
+);
+
+/**
+ * Validate session and get current user
+ */
+export const me = api(
+    { expose: true, method: "POST", path: "/api/auth/me" },
+    async ({ token }: { token: string }): Promise<{ user: User | null }> => {
+        if (!token) {
+            return { user: null };
+        }
+
+        // Find valid session
+        const session = await db.queryRow`
+            SELECT user_id, expires_at FROM sessions
+            WHERE token = ${token}
+        `;
+
+        if (!session || new Date(session.expires_at) < new Date()) {
+            return { user: null };
+        }
+
+        // Get user
+        const row = await db.queryRow`
+            SELECT 
+                id, email, role,
+                first_name, last_name, phone, image_url,
+                agent_id, contractor_id, agency_id,
+                is_verified, is_active, created_at, updated_at
+            FROM users
+            WHERE id = ${session.user_id}
+        `;
+
+        if (!row || !row.is_active) {
+            return { user: null };
+        }
+
+        return {
+            user: {
+                id: row.id,
+                email: row.email,
+                role: row.role as UserRole,
+                firstName: row.first_name,
+                lastName: row.last_name,
+                phone: row.phone,
+                imageUrl: row.image_url,
+                agentId: row.agent_id,
+                contractorId: row.contractor_id,
+                agencyId: row.agency_id,
+                isVerified: row.is_verified,
+                isActive: row.is_active,
+                createdAt: row.created_at.toISOString(),
+                updatedAt: row.updated_at.toISOString(),
+            }
+        };
+    }
+);
+
+/**
+ * Log out - invalidate session
+ */
+export const logout = api(
+    { expose: true, method: "POST", path: "/api/auth/logout" },
+    async ({ token }: { token: string }): Promise<{ success: boolean }> => {
+        if (token) {
+            await db.exec`DELETE FROM sessions WHERE token = ${token}`;
+        }
+        return { success: true };
+    }
+);
+
+// ============================================================================
+// USER MANAGEMENT ENDPOINTS
+// ============================================================================
+
+interface UpdateUserParams {
     firstName?: string;
     lastName?: string;
     phone?: string;
@@ -48,247 +297,93 @@ export interface UpdateUserParams {
     agencyId?: string;
 }
 
-// --- API Endpoints ---
-
-// --- Auth Endpoints ---
-
-import { APIError } from "encore.dev/api";
-import bcrypt from "bcryptjs";
-
-export interface SignupParams extends CreateUserParams {
-    firstName: string;
-    lastName: string;
-}
-
-export const signup = api(
-    { expose: true, method: "POST", path: "/api/auth/signup" },
-    async (params: SignupParams): Promise<{ user: User; token: string }> => {
-        if (!params.password) throw APIError.invalidArgument("password is required");
-
-        const passwordHash = await bcrypt.hash(params.password, 10);
-        const id = `u_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
-        const now = new Date();
-
-        await db.exec`
-            INSERT INTO users (id, email, password_hash, role, first_name, last_name, agency_id, created_at, updated_at)
-            VALUES (${id}, ${params.email}, ${passwordHash}, ${params.role}, ${params.firstName}, ${params.lastName}, ${params.agencyId || null}, ${now}, ${now})
-        `;
-
-        const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
-        await db.exec`
-            INSERT INTO sessions (token, user_id, expires_at)
-            VALUES (${token}, ${id}, ${expiresAt})
-        `;
-
-        const user: User = {
-            id,
-            email: params.email,
-            role: params.role,
-            firstName: params.firstName,
-            lastName: params.lastName,
-            isVerified: false,
-            isActive: true,
-            createdAt: now.toISOString(),
-            updatedAt: now.toISOString(),
-        };
-
-        return { user, token };
-    }
-);
-
-export const login = api(
-    { expose: true, method: "POST", path: "/api/auth/login" },
-    async (params: { email: string; password?: string }): Promise<{ user: User; token: string }> => {
-        const row = await db.queryRow`
-            SELECT id, email, password_hash as "passwordHash", role, first_name as "firstName", last_name as "lastName", is_verified as "isVerified", is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt"
-            FROM users
-            WHERE email = ${params.email}
-        `;
-
-        if (!row || !row.passwordHash) {
-            throw APIError.unauthenticated("invalid email or password");
-        }
-
-        const valid = await bcrypt.compare(params.password || "", row.passwordHash);
-        if (!valid) {
-            throw APIError.unauthenticated("invalid email or password");
-        }
-
-        const token = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-
-        await db.exec`
-            INSERT INTO sessions (token, user_id, expires_at)
-            VALUES (${token}, ${row.id}, ${expiresAt})
-        `;
-
-        const user: User = {
-            id: row.id,
-            email: row.email,
-            role: row.role as UserRole,
-            firstName: row.firstName,
-            lastName: row.lastName,
-            isVerified: row.isVerified,
-            isActive: row.isActive,
-            createdAt: row.createdAt.toISOString(),
-            updatedAt: row.updatedAt.toISOString(),
-        };
-
-        return { user, token };
-    }
-);
-
-export const logout = api(
-    { expose: true, auth: true, method: "POST", path: "/api/auth/logout" },
-    async (): Promise<void> => {
-        // Implementation would need the token from the header, but Encore's authHandler
-        // is where we'd ideally handle this if we want to delete the session.
-        // For now, let's assume we just want to clear it if we have access to it.
-        // In a stateless JWT system we wouldn't need this, but we have a sessions table.
-    }
-);
-
-// Get user by ID (replaces getUserByClerkId)
+/**
+ * Get user by ID
+ */
 export const getUserById = api(
-    { expose: true, auth: true, method: "GET", path: "/api/users/:id" },
-    async ({ id }: { id: string }): Promise<{ user?: User }> => {
-        const rows = db.query`
+    { expose: true, method: "GET", path: "/api/users/:id" },
+    async ({ id }: { id: string }): Promise<{ user: User | null }> => {
+        const row = await db.queryRow`
             SELECT 
                 id, email, role,
-                first_name as "firstName", last_name as "lastName",
-                phone, image_url as "imageUrl",
-                agent_id as "agentId", contractor_id as "contractorId", agency_id as "agencyId",
-                is_verified as "isVerified", is_active as "isActive",
-                created_at as "createdAt", updated_at as "updatedAt"
+                first_name, last_name, phone, image_url,
+                agent_id, contractor_id, agency_id,
+                is_verified, is_active, created_at, updated_at
             FROM users
             WHERE id = ${id}
         `;
-        for await (const row of rows) {
-            return {
-                user: {
-                    id: row.id,
-                    email: row.email,
-                    role: row.role as UserRole,
-                    firstName: row.firstName,
-                    lastName: row.lastName,
-                    phone: row.phone,
-                    imageUrl: row.imageUrl,
-                    agentId: row.agentId,
-                    contractorId: row.contractorId,
-                    agencyId: row.agencyId,
-                    isVerified: row.isVerified,
-                    isActive: row.isActive,
-                    createdAt: row.createdAt.toISOString(),
-                    updatedAt: row.updatedAt.toISOString(),
-                }
-            };
+
+        if (!row) {
+            return { user: null };
         }
-        return {};
-    }
-);
-
-// Get user by email
-export const getUserByEmail = api(
-    { expose: true, method: "GET", path: "/api/users/email/:email" },
-    async ({ email }: { email: string }): Promise<{ user?: User }> => {
-        const rows = db.query`
-            SELECT 
-                id, email, role,
-                first_name as "firstName", last_name as "lastName",
-                phone, image_url as "imageUrl",
-                agent_id as "agentId", contractor_id as "contractorId", agency_id as "agencyId",
-                is_verified as "isVerified", is_active as "isActive",
-                created_at as "createdAt", updated_at as "updatedAt"
-            FROM users
-            WHERE email = ${email}
-        `;
-        for await (const row of rows) {
-            return {
-                user: {
-                    id: row.id,
-                    email: row.email,
-                    role: row.role as UserRole,
-                    firstName: row.firstName,
-                    lastName: row.lastName,
-                    phone: row.phone,
-                    imageUrl: row.imageUrl,
-                    agentId: row.agentId,
-                    contractorId: row.contractorId,
-                    agencyId: row.agencyId,
-                    isVerified: row.isVerified,
-                    isActive: row.isActive,
-                    createdAt: row.createdAt.toISOString(),
-                    updatedAt: row.updatedAt.toISOString(),
-                }
-            };
-        }
-        return {};
-    }
-);
-
-// Create user
-export const createUser = api(
-    { expose: true, method: "POST", path: "/api/users" },
-    async (params: CreateUserParams): Promise<User> => {
-        const id = `u_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
-        const now = new Date();
-
-        const agentId = params.agentId || null;
-        const contractorId = params.contractorId || null;
-        const firstName = params.firstName || null;
-        const lastName = params.lastName || null;
-        const phone = params.phone || null;
-        const imageUrl = params.imageUrl || null;
-
-        const row = await db.queryRow`
-            INSERT INTO users (
-                id, email, role, first_name, last_name, 
-                phone, image_url, agent_id, contractor_id, agency_id,
-                is_verified, is_active, created_at, updated_at
-            ) VALUES (
-                ${id}, ${params.email}, ${params.role},
-                ${firstName}, ${lastName}, ${phone}, ${imageUrl},
-                ${agentId}, ${contractorId}, ${params.agencyId || null}, false, true, ${now}, ${now}
-            )
-            ON CONFLICT (email) DO UPDATE SET
-                role = EXCLUDED.role,
-                first_name = COALESCE(EXCLUDED.first_name, users.first_name),
-                last_name = COALESCE(EXCLUDED.last_name, users.last_name),
-                phone = COALESCE(EXCLUDED.phone, users.phone),
-                image_url = COALESCE(EXCLUDED.image_url, users.image_url),
-                agent_id = COALESCE(EXCLUDED.agent_id, users.agent_id),
-                contractor_id = COALESCE(EXCLUDED.contractor_id, users.contractor_id),
-                agency_id = COALESCE(EXCLUDED.agency_id, users.agency_id),
-                updated_at = EXCLUDED.updated_at
-            RETURNING id, email, role, first_name as "firstName", last_name as "lastName", phone, image_url as "imageUrl", agent_id as "agentId", contractor_id as "contractorId", agency_id as "agencyId", is_verified as "isVerified", is_active as "isActive", created_at as "createdAt", updated_at as "updatedAt"
-        `;
-
-        if (!row) throw new Error("Failed to create/update user");
 
         return {
-            id: row.id,
-            email: row.email,
-            role: row.role as UserRole,
-            firstName: row.firstName || undefined,
-            lastName: row.lastName || undefined,
-            phone: row.phone || undefined,
-            imageUrl: row.imageUrl || undefined,
-            agentId: row.agentId || undefined,
-            contractorId: row.contractorId || undefined,
-            agencyId: row.agencyId || undefined,
-            isVerified: row.isVerified,
-            isActive: row.isActive,
-            createdAt: row.createdAt.toISOString(),
-            updatedAt: row.updatedAt.toISOString(),
+            user: {
+                id: row.id,
+                email: row.email,
+                role: row.role as UserRole,
+                firstName: row.first_name,
+                lastName: row.last_name,
+                phone: row.phone,
+                imageUrl: row.image_url,
+                agentId: row.agent_id,
+                contractorId: row.contractor_id,
+                agencyId: row.agency_id,
+                isVerified: row.is_verified,
+                isActive: row.is_active,
+                createdAt: row.created_at.toISOString(),
+                updatedAt: row.updated_at.toISOString(),
+            }
         };
     }
 );
 
-// Update user
+/**
+ * Get user by email
+ */
+export const getUserByEmail = api(
+    { expose: true, method: "GET", path: "/api/users/email/:email" },
+    async ({ email }: { email: string }): Promise<{ user: User | null }> => {
+        const row = await db.queryRow`
+            SELECT 
+                id, email, role,
+                first_name, last_name, phone, image_url,
+                agent_id, contractor_id, agency_id,
+                is_verified, is_active, created_at, updated_at
+            FROM users
+            WHERE email = ${email}
+        `;
+
+        if (!row) {
+            return { user: null };
+        }
+
+        return {
+            user: {
+                id: row.id,
+                email: row.email,
+                role: row.role as UserRole,
+                firstName: row.first_name,
+                lastName: row.last_name,
+                phone: row.phone,
+                imageUrl: row.image_url,
+                agentId: row.agent_id,
+                contractorId: row.contractor_id,
+                agencyId: row.agency_id,
+                isVerified: row.is_verified,
+                isActive: row.is_active,
+                createdAt: row.created_at.toISOString(),
+                updatedAt: row.updated_at.toISOString(),
+            }
+        };
+    }
+);
+
+/**
+ * Update user
+ */
 export const updateUser = api(
-    { expose: true, auth: true, method: "PUT", path: "/api/users/:id" },
+    { expose: true, method: "PUT", path: "/api/users/:id" },
     async ({ id, ...updates }: { id: string } & UpdateUserParams): Promise<{ success: boolean }> => {
         const now = new Date();
 
@@ -312,45 +407,49 @@ export const updateUser = api(
     }
 );
 
-// Get all users (admin endpoint)
+/**
+ * List all users (admin)
+ */
 export const listUsers = api(
-    { expose: true, auth: true, method: "GET", path: "/api/users" },
+    { expose: true, method: "GET", path: "/api/users" },
     async (): Promise<{ users: User[] }> => {
         const users: User[] = [];
         const rows = db.query`
             SELECT 
                 id, email, role,
-                first_name as "firstName", last_name as "lastName",
-                phone, image_url as "imageUrl",
-                agent_id as "agentId", contractor_id as "contractorId", agency_id as "agencyId",
-                is_verified as "isVerified", is_active as "isActive",
-                created_at as "createdAt", updated_at as "updatedAt"
+                first_name, last_name, phone, image_url,
+                agent_id, contractor_id, agency_id,
+                is_verified, is_active, created_at, updated_at
             FROM users
             ORDER BY created_at DESC
         `;
+
         for await (const row of rows) {
             users.push({
                 id: row.id,
                 email: row.email,
                 role: row.role as UserRole,
-                firstName: row.firstName,
-                lastName: row.lastName,
+                firstName: row.first_name,
+                lastName: row.last_name,
                 phone: row.phone,
-                imageUrl: row.imageUrl,
-                agentId: row.agentId,
-                contractorId: row.contractorId,
-                agencyId: row.agencyId,
-                isVerified: row.isVerified,
-                isActive: row.isActive,
-                createdAt: row.createdAt.toISOString(),
-                updatedAt: row.updatedAt.toISOString(),
+                imageUrl: row.image_url,
+                agentId: row.agent_id,
+                contractorId: row.contractor_id,
+                agencyId: row.agency_id,
+                isVerified: row.is_verified,
+                isActive: row.is_active,
+                createdAt: row.created_at.toISOString(),
+                updatedAt: row.updated_at.toISOString(),
             });
         }
+
         return { users };
     }
 );
 
-// Get users by role
+/**
+ * Get users by role
+ */
 export const getUsersByRole = api(
     { expose: true, method: "GET", path: "/api/users/role/:role" },
     async ({ role }: { role: string }): Promise<{ users: User[] }> => {
@@ -358,33 +457,33 @@ export const getUsersByRole = api(
         const rows = db.query`
             SELECT 
                 id, email, role,
-                first_name as "firstName", last_name as "lastName",
-                phone, image_url as "imageUrl",
-                agent_id as "agentId", contractor_id as "contractorId", agency_id as "agencyId",
-                is_verified as "isVerified", is_active as "isActive",
-                created_at as "createdAt", updated_at as "updatedAt"
+                first_name, last_name, phone, image_url,
+                agent_id, contractor_id, agency_id,
+                is_verified, is_active, created_at, updated_at
             FROM users
             WHERE role = ${role}
             ORDER BY created_at DESC
         `;
+
         for await (const row of rows) {
             users.push({
                 id: row.id,
                 email: row.email,
                 role: row.role as UserRole,
-                firstName: row.firstName,
-                lastName: row.lastName,
+                firstName: row.first_name,
+                lastName: row.last_name,
                 phone: row.phone,
-                imageUrl: row.imageUrl,
-                agentId: row.agentId,
-                contractorId: row.contractorId,
-                agencyId: row.agencyId,
-                isVerified: row.isVerified,
-                isActive: row.isActive,
-                createdAt: row.createdAt.toISOString(),
-                updatedAt: row.updatedAt.toISOString(),
+                imageUrl: row.image_url,
+                agentId: row.agent_id,
+                contractorId: row.contractor_id,
+                agencyId: row.agency_id,
+                isVerified: row.is_verified,
+                isActive: row.is_active,
+                createdAt: row.created_at.toISOString(),
+                updatedAt: row.updated_at.toISOString(),
             });
         }
+
         return { users };
     }
 );

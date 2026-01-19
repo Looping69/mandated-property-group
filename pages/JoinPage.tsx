@@ -5,90 +5,136 @@ import { ContractorRegistration } from '../components/ContractorRegistration';
 import { AgencyRegistration } from '../components/AgencyRegistration';
 import { AgentRegistration } from '../components/AgentRegistration';
 import { useData } from '../contexts/DataContext';
-import { useUser, useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../contexts/AuthContext';
 import { userService } from '../services/userService';
 
 export const JoinPage: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useUser();
-    const { getToken } = useAuth();
+    const { user, getDashboardUrl } = useAuth();
     const { addContractor, addAgency, addAgent } = useData();
 
+    /**
+     * Handle contractor registration completion
+     */
     const handleContractorSubmit = async (data: any) => {
         try {
+            // Add contractor to the system
             const newContractor = await addContractor(data);
+
+            // Link contractor to the user and mark as verified
             if (user) {
                 await userService.update(user.id, {
                     contractorId: newContractor.id,
-                    isVerified: true // Assuming onboarding verification for now
+                    isVerified: true,
                 });
-                navigate('/maintenance-dashboard');
             }
+
+            // Redirect to contractor dashboard
+            navigate('/maintenance-dashboard', { replace: true });
         } catch (e) {
-            console.error("Registration failed", e);
-            alert("Failed to register. Please try again.");
+            console.error("Contractor registration failed:", e);
+            throw e; // Re-throw so the component can handle the error
         }
     };
 
+    /**
+     * Handle agency registration completion
+     */
     const handleAgencySubmit = async (data: any) => {
         try {
-            const newAgency = addAgency ? await addAgency(data) : data;
+            // Add agency to the system
+            if (addAgency) {
+                await addAgency(data);
+            }
+
+            // Mark user as verified
             if (user) {
                 await userService.update(user.id, {
-                    isVerified: true
+                    isVerified: true,
                 });
-                navigate('/dashboard');
             }
+
+            // Redirect to agency dashboard
+            navigate('/dashboard', { replace: true });
         } catch (e) {
-            console.error("Agency registration failed", e);
-            alert("Registration failed. Please try again.");
+            console.error("Agency registration failed:", e);
+            throw e;
         }
     };
 
+    /**
+     * Handle agent registration completion
+     */
     const handleAgentSubmit = async (data: any) => {
         try {
+            // Add agent to the system
             const newAgent = await addAgent(data);
+
+            // Link agent to the user and mark as verified
             if (user) {
                 await userService.update(user.id, {
                     agentId: newAgent.id,
-                    isVerified: true
+                    isVerified: true,
                 });
-                navigate('/dashboard');
             }
+
+            // Redirect to agent dashboard
+            navigate('/dashboard', { replace: true });
         } catch (e) {
-            console.error("Agent registration failed", e);
-            alert("Registration failed. Please try again.");
+            console.error("Agent registration failed:", e);
+            throw e;
         }
     };
 
     return (
         <Routes>
-            <Route index element={
-                <JoinSelection
-                    onSelectType={(type) => navigate(type)}
-                    onCancel={() => navigate('/')}
-                />
-            } />
-            <Route path="contractor" element={
-                <ContractorRegistration
-                    onSubmit={handleContractorSubmit}
-                    onDashboardRedirect={() => navigate('/maintenance')}
-                    onCancel={() => navigate('/join')}
-                />
-            } />
-            <Route path="agency" element={
-                <AgencyRegistration
-                    onSubmit={handleAgencySubmit}
-                    onCancel={() => navigate('/join')}
-                />
-            } />
-            <Route path="agent" element={
-                <AgentRegistration
-                    onSubmit={handleAgentSubmit}
-                    onCancel={() => navigate('/join')}
-                    onDashboardRedirect={() => navigate('/dashboard')}
-                />
-            } />
+            {/* Role Selection */}
+            <Route
+                index
+                element={
+                    <JoinSelection
+                        onSelectType={(type) => navigate(type)}
+                        onCancel={() => navigate('/')}
+                    />
+                }
+            />
+
+            {/* Contractor Registration */}
+            <Route
+                path="contractor"
+                element={
+                    <ContractorRegistration
+                        onSubmit={handleContractorSubmit}
+                        onDashboardRedirect={() => navigate('/maintenance-dashboard')}
+                        onCancel={() => navigate('/join')}
+                    />
+                }
+            />
+
+            {/* Agency Registration */}
+            <Route
+                path="agency"
+                element={
+                    <AgencyRegistration
+                        onSubmit={handleAgencySubmit}
+                        onCancel={() => navigate('/join')}
+                    />
+                }
+            />
+
+            {/* Agent Registration */}
+            <Route
+                path="agent"
+                element={
+                    <AgentRegistration
+                        onSubmit={handleAgentSubmit}
+                        onCancel={() => navigate('/join')}
+                        onDashboardRedirect={() => navigate('/dashboard')}
+                    />
+                }
+            />
+
+            {/* Fallback */}
             <Route path="*" element={<Navigate to="" replace />} />
         </Routes>
     );

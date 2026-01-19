@@ -13,8 +13,10 @@ interface AgentCardProps {
 }
 
 export const AgentCard: React.FC<AgentCardProps> = ({ agent, onImageUpdate, onViewProfile }) => {
-    const rating = agent.reviews.length > 0
-        ? (agent.reviews.reduce((acc, r) => acc + r.rating, 0) / agent.reviews.length).toFixed(1)
+    // Safely handle agents without reviews array
+    const reviews = agent.reviews || [];
+    const rating = reviews.length > 0
+        ? (reviews.reduce((acc, r) => acc + r.rating, 0) / reviews.length).toFixed(1)
         : "5.0";
 
     return (
@@ -38,15 +40,17 @@ export const AgentCard: React.FC<AgentCardProps> = ({ agent, onImageUpdate, onVi
 
             <div className="text-center relative z-10 w-full">
                 <h3 className="text-xl font-serif font-bold text-slate-900 mb-1 group-hover:text-brand-purple transition-colors">{agent.name}</h3>
-                <p className="text-xs text-brand-green font-bold uppercase tracking-[0.2em] mb-4">{agent.title}</p>
+                <p className="text-xs text-brand-green font-bold uppercase tracking-[0.2em] mb-4">{agent.title || 'Real Estate Agent'}</p>
 
                 <div className="flex flex-wrap justify-center gap-2 mb-8">
                     <span className="bg-slate-50 text-slate-500 text-[10px] font-bold px-3 py-1.5 rounded-full border border-slate-100 flex items-center gap-1.5">
                         <Award size={12} className="text-brand-purple" /> Elite Status
                     </span>
-                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
-                        <TrendingUp size={12} /> {agent.sales}
-                    </span>
+                    {agent.sales && (
+                        <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
+                            <TrendingUp size={12} /> {agent.sales}
+                        </span>
+                    )}
                 </div>
 
                 <div className="space-y-3 w-full border-t border-slate-50 pt-6">

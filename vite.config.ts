@@ -7,7 +7,6 @@ export default defineConfig(({ mode }) => {
   return {
     define: {
       'process.env.ENCORE_API_URL': JSON.stringify(env.ENCORE_API_URL || ''),
-      'process.env.CLERK_PUBLISHABLE_KEY': JSON.stringify(env.CLERK_PUBLISHABLE_KEY || ''),
     },
     server: {
       port: 3000,

@@ -10,6 +10,7 @@ import { MaintenancePage, MaintenanceDashboardPage } from './pages/MaintenancePa
 import { ConveyancerPage } from './pages/ConveyancerPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { PricingPage } from './pages/PricingPage';
 import { PrivacyPage, TermsPage, PopiaPage } from './pages/LegalPages';
 import {
     ServiceShowPropertyPage,
@@ -65,6 +66,7 @@ export const MainRoutes = () => {
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/tour-creator" element={<SignedIn><VirtualTourCreator /></SignedIn>} />
                 <Route path="/pending-approval" element={<PendingApproval />} />
+                <Route path="/pricing" element={<PricingPage />} />
 
                 {/* Legal */}
                 <Route path="/privacy" element={<PrivacyPage />} />

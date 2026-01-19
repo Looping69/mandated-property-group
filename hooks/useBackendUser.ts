@@ -1,38 +1,42 @@
-import { useState, useEffect } from 'react';
-import { useUser, useAuth } from '../contexts/AuthContext';
+import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types';
 
-// Extended User type including helper flags
 interface BackendUserData {
     user: User | null;
     isLoading: boolean;
     error: Error | null;
-    isVerified: boolean; // Helper from backend user profile
-    hasProfile: boolean; // Helper: true if user exists in backend
+    isVerified: boolean;
+    hasProfile: boolean;
     refreshUser: () => Promise<void>;
 }
 
+/**
+ * Hook to access the current authenticated user from the backend
+ */
 export function useBackendUser(): BackendUserData {
-    const { user, isLoaded, isSignedIn } = useUser();
-    const [isLoading, setIsLoading] = useState(true);
+    const { user, isLoaded, refreshUser: authRefresh } = useAuth();
+    const [isLoading, setIsLoading] = useState(!isLoaded);
 
     useEffect(() => {
-        if (isLoaded) {
-            setIsLoading(false);
-        }
+        setIsLoading(!isLoaded);
     }, [isLoaded]);
 
-    const refreshUser = async () => {
-        // In our domestic auth system, the user is already in the context
-        // But we could trigger a refresh logic if needed.
-    };
+    const refreshUser = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            await authRefresh();
+        } finally {
+            setIsLoading(false);
+        }
+    }, [authRefresh]);
 
     return {
-        user: user,
-        isLoading: isLoading,
+        user,
+        isLoading,
         error: null,
         isVerified: user?.isVerified ?? false,
         hasProfile: !!user,
-        refreshUser
+        refreshUser,
     };
 }

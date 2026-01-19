@@ -12,6 +12,7 @@ import "./maintenance";
 import "./users";
 import "./agencies";
 import "./seed";
+import "./subscriptions";
 
 // Define a Postgres database named 'property'
 export const db = new SQLDatabase("property", {

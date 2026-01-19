@@ -9,7 +9,7 @@ export { inquiryService, type CreateInquiryParams } from './inquiryService';
 export { maintenanceService } from './maintenanceService';
 export { propertyService } from './propertyService';
 export { tourService, type CreateTourParams, type CreateTourStopParams } from './tourService';
-export { userService, type User, type UserRole, type CreateUserParams, type UpdateUserParams } from './userService';
+export { userService, type SignupParams, type LoginParams, type UpdateUserParams } from './userService';
 
 // Re-export API config for custom requests
 export { apiRequest } from './apiConfig';

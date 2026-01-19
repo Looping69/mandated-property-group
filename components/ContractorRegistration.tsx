@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     Wrench, Upload, CheckCircle, ArrowRight, Phone, Mail,
     MapPin, DollarSign, FileText, Award, Star, Briefcase,
-    Camera, User, Building
+    Camera, Building
 } from 'lucide-react';
 import { Card, Input } from './admin/Shared';
 import { Button } from './ui/button';
@@ -19,33 +19,19 @@ interface ContractorRegistrationProps {
 }
 
 const TRADE_CATEGORIES = [
-    'Plumbing',
-    'Electrical',
-    'General Building',
-    'Painting',
-    'Roofing',
-    'HVAC',
-    'Carpentry',
-    'Landscaping',
-    'Pool Maintenance',
-    'Security Systems',
-    'Interior Design',
-    'Pest Control',
-    'Other'
+    'Plumbing', 'Electrical', 'General Building', 'Painting',
+    'Roofing', 'HVAC', 'Carpentry', 'Landscaping',
+    'Pool Maintenance', 'Security Systems', 'Interior Design',
+    'Pest Control', 'Other'
 ];
 
 const LOCATIONS = [
-    'Cape Town',
-    'Johannesburg',
-    'Durban',
-    'Pretoria',
-    'Port Elizabeth',
-    'Bloemfontein',
-    'East London',
-    'Nelspruit',
-    'Polokwane',
-    'Kimberley'
+    'Cape Town', 'Johannesburg', 'Durban', 'Pretoria',
+    'Port Elizabeth', 'Bloemfontein', 'East London',
+    'Nelspruit', 'Polokwane', 'Kimberley'
 ];
+
+type Step = 1 | 2 | 3 | 4 | 5;
 
 export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
     onSubmit,
@@ -53,7 +39,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
     onDashboardRedirect
 }) => {
     const { isSignedIn } = useUser();
-    const [step, setStep] = useState(1);
+    const [step, setStep] = useState<Step>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -72,37 +58,6 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         license: false
     });
 
-    useEffect(() => {
-        const autoSubmit = async () => {
-            if (step === 4 && isSignedIn) {
-                // Auto-submit if already signed in
-                try {
-                    const contractorData = {
-                        name: formData.name,
-                        trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
-                        location: formData.location,
-                        phone: formData.phone,
-                        email: formData.email,
-                        hourlyRate: Number(formData.hourlyRate),
-                        description: formData.description,
-                        image: formData.image || 'https://images.unsplash.com/photo-1504253163759-c23fccaebb55?q=80&w=400',
-                        rating: 4.0,
-                        isVerified: false
-                    };
-
-                    await onSubmit(contractorData);
-                    setStep(5);
-                } catch (error) {
-                    console.error('Registration failed:', error);
-                    alert('Registration failed. Please try again.');
-                    // Optionally go back
-                    setStep(3);
-                }
-            }
-        };
-        autoSubmit();
-    }, [step, isSignedIn]);
-
     const updateField = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -117,58 +72,44 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         reader.readAsDataURL(file);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const isStep1Valid = () => formData.name && formData.trade && formData.location && formData.phone && formData.email;
+    const isStep2Valid = () => formData.hourlyRate && formData.description;
+    const isStep3Valid = () => formData.insurance && formData.license;
 
-        // If Enter is pressed on early steps, move to next step instead of submitting
-        if (step === 1) {
-            if (isStep1Valid()) setStep(2);
-            return;
-        }
-        if (step === 2) {
-            if (isStep2Valid()) setStep(3);
-            return;
-        }
-        if (step === 3 && !isStep3Valid()) {
-            return;
-        }
+    const handleNextStep = () => {
+        if (step === 1 && isStep1Valid()) setStep(2);
+        else if (step === 2 && isStep2Valid()) setStep(3);
+        else if (step === 3 && isStep3Valid()) setStep(4);
+    };
 
+    const handleBack = () => {
+        if (step > 1 && step < 5) setStep((step - 1) as Step);
+    };
+
+    const getContractorData = () => ({
+        name: formData.name,
+        trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
+        location: formData.location,
+        phone: formData.phone,
+        email: formData.email,
+        hourlyRate: Number(formData.hourlyRate),
+        description: formData.description,
+        image: formData.image || 'https://images.unsplash.com/photo-1504253163759-c23fccaebb55?w=400',
+        rating: 4.0,
+        isVerified: false
+    });
+
+    const handleSignUpSuccess = async () => {
         setIsSubmitting(true);
-
         try {
-            const contractorData = {
-                name: formData.name,
-                trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
-                location: formData.location,
-                phone: formData.phone,
-                email: formData.email,
-                hourlyRate: Number(formData.hourlyRate),
-                description: formData.description,
-                image: formData.image || 'https://images.unsplash.com/photo-1504253163759-c23fccaebb55?q=80&w=400',
-                rating: 4.0,
-                isVerified: false
-            };
-
-            await onSubmit(contractorData);
-            setStep(4); // Move to Success Step
+            await onSubmit(getContractorData());
+            setStep(5);
         } catch (error) {
-            console.error('Registration failed:', error);
-            alert('Registration failed. Please try again.');
+            console.error('Failed to save contractor data:', error);
+            throw error;
         } finally {
             setIsSubmitting(false);
         }
-    };
-
-    const isStep1Valid = () => {
-        return formData.name && formData.trade && formData.location && formData.phone && formData.email;
-    };
-
-    const isStep2Valid = () => {
-        return formData.hourlyRate && formData.description;
-    };
-
-    const isStep3Valid = () => {
-        return !!formData.insurance && !!formData.license;
     };
 
     const renderStepIndicator = () => (
@@ -178,18 +119,11 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                     <React.Fragment key={num}>
                         <div className={cn(
                             "flex items-center justify-center w-10 h-10 rounded-full font-bold transition-all text-sm",
-                            step >= num
-                                ? "bg-brand-green text-white shadow-lg"
-                                : "bg-slate-200 text-slate-400"
+                            step >= num ? "bg-brand-green text-white shadow-lg" : "bg-slate-200 text-slate-400"
                         )}>
                             {step > num ? <CheckCircle size={18} /> : num}
                         </div>
-                        {num < 4 && (
-                            <div className={cn(
-                                "w-8 h-1 transition-all",
-                                step > num ? "bg-brand-green" : "bg-slate-200"
-                            )} />
-                        )}
+                        {num < 4 && <div className={cn("w-8 h-1 transition-all", step > num ? "bg-brand-green" : "bg-slate-200")} />}
                     </React.Fragment>
                 ))}
             </div>
@@ -222,20 +156,13 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 </div>
             </div>
 
-            {/* Business Name */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <Building size={14} /> Business Name *
                 </label>
-                <Input
-                    placeholder="e.g. BuildRight Construction"
-                    value={formData.name}
-                    onChange={e => updateField('name', e.target.value)}
-                    required
-                />
+                <Input placeholder="e.g. BuildRight Construction" value={formData.name} onChange={e => updateField('name', e.target.value)} />
             </div>
 
-            {/* Trade Category */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <Wrench size={14} /> Trade/Service *
@@ -244,7 +171,6 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                     value={formData.trade}
                     onChange={e => updateField('trade', e.target.value)}
                     className="h-12 w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:border-transparent transition-all"
-                    required
                 >
                     <option value="">Select your trade</option>
                     {TRADE_CATEGORIES.map(trade => (
@@ -253,19 +179,12 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 </select>
             </div>
 
-            {/* Custom Trade (if Other is selected) */}
             {formData.trade === 'Other' && (
                 <div className="animate-in fade-in slide-in-from-top-2 duration-200">
-                    <Input
-                        placeholder="Please specify your trade"
-                        value={formData.customTrade}
-                        onChange={e => updateField('customTrade', e.target.value)}
-                        required
-                    />
+                    <Input placeholder="Please specify your trade" value={formData.customTrade} onChange={e => updateField('customTrade', e.target.value)} />
                 </div>
             )}
 
-            {/* Location */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <MapPin size={14} /> Service Area *
@@ -274,7 +193,6 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                     value={formData.location}
                     onChange={e => updateField('location', e.target.value)}
                     className="h-12 w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-2 text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green focus-visible:border-transparent transition-all"
-                    required
                 >
                     <option value="">Select your location</option>
                     {LOCATIONS.map(loc => (
@@ -283,31 +201,18 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 </select>
             </div>
 
-            {/* Contact Info */}
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                         <Phone size={14} /> Phone *
                     </label>
-                    <Input
-                        type="tel"
-                        placeholder="+27 XX XXX XXXX"
-                        value={formData.phone}
-                        onChange={e => updateField('phone', e.target.value)}
-                        required
-                    />
+                    <Input type="tel" placeholder="+27 XX XXX XXXX" value={formData.phone} onChange={e => updateField('phone', e.target.value)} />
                 </div>
                 <div>
                     <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                         <Mail size={14} /> Email *
                     </label>
-                    <Input
-                        type="email"
-                        placeholder="your@email.com"
-                        value={formData.email}
-                        onChange={e => updateField('email', e.target.value)}
-                        required
-                    />
+                    <Input type="email" placeholder="your@email.com" value={formData.email} onChange={e => updateField('email', e.target.value)} />
                 </div>
             </div>
         </div>
@@ -320,39 +225,24 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 <p className="text-slate-500">Tell us about your services and rates</p>
             </div>
 
-            {/* Hourly Rate */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <DollarSign size={14} /> Hourly Rate (ZAR) *
                 </label>
                 <div className="relative">
                     <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">R</span>
-                    <Input
-                        type="number"
-                        placeholder="650"
-                        value={formData.hourlyRate}
-                        onChange={e => updateField('hourlyRate', e.target.value)}
-                        className="pl-10"
-                        required
-                    />
+                    <Input type="number" placeholder="650" value={formData.hourlyRate} onChange={e => updateField('hourlyRate', e.target.value)} className="pl-10" />
                 </div>
                 <p className="text-xs text-slate-400 mt-1">Average rates: Budget (R300-500), Mid (R500-800), Premium (R800+)</p>
             </div>
 
-            {/* Years of Experience */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <Award size={14} /> Years of Experience
                 </label>
-                <Input
-                    type="number"
-                    placeholder="e.g. 5"
-                    value={formData.yearsExperience}
-                    onChange={e => updateField('yearsExperience', e.target.value)}
-                />
+                <Input type="number" placeholder="e.g. 5" value={formData.yearsExperience} onChange={e => updateField('yearsExperience', e.target.value)} />
             </div>
 
-            {/* Description */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <FileText size={14} /> Service Description *
@@ -362,21 +252,15 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                     placeholder="Describe your services, specialties, and what sets you apart..."
                     value={formData.description}
                     onChange={e => updateField('description', e.target.value)}
-                    required
                 />
                 <p className="text-xs text-slate-400 mt-1">{formData.description.length}/500 characters</p>
             </div>
 
-            {/* Certifications */}
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <Award size={14} /> Certifications & Licenses
                 </label>
-                <Input
-                    placeholder="e.g. Licensed Electrician, PIRB Registered"
-                    value={formData.certifications}
-                    onChange={e => updateField('certifications', e.target.value)}
-                />
+                <Input placeholder="e.g. Licensed Electrician, PIRB Registered" value={formData.certifications} onChange={e => updateField('certifications', e.target.value)} />
             </div>
         </div>
     );
@@ -388,15 +272,9 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 <p className="text-slate-500">Help us understand your service offerings</p>
             </div>
 
-            {/* Checkboxes */}
             <div className="space-y-4">
                 <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border-2 border-transparent has-[:checked]:border-brand-green has-[:checked]:bg-brand-green/5">
-                    <input
-                        type="checkbox"
-                        checked={formData.emergencyService}
-                        onChange={e => updateField('emergencyService', e.target.checked)}
-                        className="w-5 h-5 rounded text-brand-green focus:ring-brand-green"
-                    />
+                    <input type="checkbox" checked={formData.emergencyService} onChange={e => updateField('emergencyService', e.target.checked)} className="w-5 h-5 rounded text-brand-green focus:ring-brand-green" />
                     <div>
                         <p className="font-bold text-slate-900">24/7 Emergency Service</p>
                         <p className="text-xs text-slate-500">I offer round-the-clock emergency services</p>
@@ -404,12 +282,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 </label>
 
                 <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border-2 border-transparent has-[:checked]:border-brand-green has-[:checked]:bg-brand-green/5">
-                    <input
-                        type="checkbox"
-                        checked={formData.insurance}
-                        onChange={e => updateField('insurance', e.target.checked)}
-                        className="w-5 h-5 rounded text-brand-green focus:ring-brand-green"
-                    />
+                    <input type="checkbox" checked={formData.insurance} onChange={e => updateField('insurance', e.target.checked)} className="w-5 h-5 rounded text-brand-green focus:ring-brand-green" />
                     <div>
                         <p className="font-bold text-slate-900">Liability Insurance *</p>
                         <p className="text-xs text-slate-500">I carry professional liability insurance</p>
@@ -417,12 +290,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                 </label>
 
                 <label className="flex items-center gap-3 p-4 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors border-2 border-transparent has-[:checked]:border-brand-green has-[:checked]:bg-brand-green/5">
-                    <input
-                        type="checkbox"
-                        checked={formData.license}
-                        onChange={e => updateField('license', e.target.checked)}
-                        className="w-5 h-5 rounded text-brand-green focus:ring-brand-green"
-                    />
+                    <input type="checkbox" checked={formData.license} onChange={e => updateField('license', e.target.checked)} className="w-5 h-5 rounded text-brand-green focus:ring-brand-green" />
                     <div>
                         <p className="font-bold text-slate-900">Licensed & Registered *</p>
                         <p className="text-xs text-slate-500">I am licensed with relevant authorities</p>
@@ -454,7 +322,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         </div>
     );
 
-    const renderStep4 = () => (
+    const renderStep5Success = () => (
         <div className="text-center space-y-6 animate-in fade-in zoom-in duration-300 py-8">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle size={48} className="text-brand-green" />
@@ -475,11 +343,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
             </div>
 
             <div className="pt-8">
-                <Button
-                    onClick={onDashboardRedirect}
-                    variant="brand"
-                    className="w-full py-6 text-lg shadow-xl"
-                >
+                <Button onClick={onDashboardRedirect} variant="brand" className="w-full py-6 text-lg shadow-xl">
                     Go to Dashboard <ArrowRight className="ml-2" />
                 </Button>
             </div>
@@ -490,127 +354,71 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-12 px-4">
             <div className="max-w-2xl mx-auto">
                 {/* Header */}
-                <div className="text-center mb-12">
-                    {step < 4 && (
-                        <>
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-emerald-600 rounded-2xl mb-4 shadow-lg">
-                                <Wrench size={32} className="text-white" />
-                            </div>
-                            <h1 className="text-4xl font-bold text-slate-900 mb-3">Join Our Network</h1>
-                            <p className="text-lg text-slate-600">Register as a Maintenance Service Provider</p>
-                        </>
-                    )}
-                </div>
+                {step < 4 && (
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-emerald-600 rounded-2xl mb-4 shadow-lg">
+                            <Wrench size={32} className="text-white" />
+                        </div>
+                        <h1 className="text-4xl font-bold text-slate-900 mb-3">Join Our Network</h1>
+                        <p className="text-lg text-slate-600">Register as a Maintenance Service Provider</p>
+                    </div>
+                )}
 
-                {/* Form Card */}
                 <Card className="p-8 md:p-12 shadow-xl">
-                    {step < 5 && renderStepIndicator()}
+                    {step < 5 && step !== 4 && renderStepIndicator()}
 
-                    <form onSubmit={handleSubmit}>
-                        {step === 1 && renderStep1()}
-                        {step === 2 && renderStep2()}
-                        {step === 3 && renderStep3()}
-                        {step === 4 && (
-                            isSignedIn ? (
-                                <div className="text-center py-12">
-                                    <h3 className="text-xl font-bold mb-4">Submitting Application...</h3>
-                                    <p className="text-slate-500">Please wait while we process your registration.</p>
-                                </div>
-                            ) : (
-                                <SignUpStep
-                                    role="CONTRACTOR"
-                                    registrationData={{
-                                        name: formData.name,
-                                        trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
-                                        location: formData.location,
-                                        phone: formData.phone,
-                                        email: formData.email,
-                                        hourlyRate: Number(formData.hourlyRate),
-                                        description: formData.description,
-                                        yearsExperience: formData.yearsExperience,
-                                        certifications: formData.certifications,
-                                        emergencyService: formData.emergencyService,
-                                        insurance: formData.insurance,
-                                        license: formData.license,
-                                        image: formData.image,
-                                    }}
-                                    onSuccess={async () => {
-                                        // Save to backend after signup completes
-                                        try {
-                                            await onSubmit({
-                                                name: formData.name,
-                                                trade: formData.trade === 'Other' ? formData.customTrade : formData.trade,
-                                                location: formData.location,
-                                                phone: formData.phone,
-                                                email: formData.email,
-                                                hourlyRate: Number(formData.hourlyRate),
-                                                description: formData.description,
-                                                image: formData.image || 'https://images.unsplash.com/photo-1504253163759-c23fccaebb55?q=80&w=400',
-                                                rating: 4.0,
-                                                isVerified: false
-                                            });
-                                        } catch (error) {
-                                            console.error('Failed to save contractor data:', error);
-                                        }
-                                        setStep(5); // Move to Success Step
-                                    }}
-                                    onBack={() => setStep(3)}
-                                />
-                            )
-                        )}
-                        {step === 5 && renderStep4()}
+                    {step === 1 && renderStep1()}
+                    {step === 2 && renderStep2()}
+                    {step === 3 && renderStep3()}
+                    {step === 4 && (
+                        <SignUpStep
+                            role="CONTRACTOR"
+                            registrationData={{
+                                name: formData.name,
+                                phone: formData.phone,
+                                email: formData.email,
+                                image: formData.image,
+                            }}
+                            onSuccess={handleSignUpSuccess}
+                            onBack={() => setStep(3)}
+                        />
+                    )}
+                    {step === 5 && renderStep5Success()}
 
-                        {/* Navigation Buttons - Only show for steps 1-3 */}
-                        {step < 4 && (
-                            <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
-                                {step > 1 && (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setStep(step - 1)}
-                                        className="flex-1"
-                                    >
-                                        Back
-                                    </Button>
-                                )}
-                                {step < 3 ? (
-                                    <Button
-                                        type="button"
-                                        variant="brand"
-                                        onClick={() => setStep(step + 1)}
-                                        disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()}
-                                        className="flex-1"
-                                    >
-                                        Continue <ArrowRight size={16} className="ml-2" />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="button"
-                                        variant="brand"
-                                        onClick={() => setStep(4)}
-                                        disabled={!isStep3Valid()}
-                                        className="flex-1"
-                                    >
-                                        Continue to Account Setup <ArrowRight size={16} className="ml-2" />
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-
-                        {onCancel && step < 5 && step !== 4 && (
-                            <button
+                    {/* Navigation Buttons */}
+                    {step < 4 && (
+                        <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
+                            {step > 1 && (
+                                <Button type="button" variant="outline" onClick={handleBack} className="flex-1">
+                                    Back
+                                </Button>
+                            )}
+                            <Button
                                 type="button"
-                                onClick={onCancel}
-                                className="w-full mt-4 text-sm text-slate-500 hover:text-slate-700 transition-colors"
+                                variant="brand"
+                                onClick={handleNextStep}
+                                disabled={
+                                    (step === 1 && !isStep1Valid()) ||
+                                    (step === 2 && !isStep2Valid()) ||
+                                    (step === 3 && !isStep3Valid())
+                                }
+                                className="flex-1"
                             >
-                                Cancel
-                            </button>
-                        )}
-                    </form>
+                                {step === 3 ? 'Continue to Account Setup' : 'Continue'}
+                                <ArrowRight size={16} className="ml-2" />
+                            </Button>
+                        </div>
+                    )}
                 </Card>
 
+                {onCancel && step < 4 && (
+                    <button onClick={onCancel} className="w-full mt-8 text-slate-400 hover:text-slate-600 font-medium text-sm">
+                        Cancel Registration
+                    </button>
+                )}
+
                 {/* Trust Indicators */}
-                {step < 5 && step !== 4 && (
+                {step < 4 && (
                     <div className="mt-8 grid grid-cols-3 gap-4 text-center">
                         <div className="bg-white rounded-lg p-4 shadow-sm">
                             <p className="text-2xl font-bold text-brand-green">500+</p>

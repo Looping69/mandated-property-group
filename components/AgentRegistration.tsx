@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     User, Upload, CheckCircle, ArrowRight,
     MapPin, Smartphone, Mail, Award, Camera,
@@ -18,27 +18,15 @@ interface AgentRegistrationProps {
     onDashboardRedirect?: () => void;
 }
 
+type Step = 1 | 2 | 3 | 4 | 5;
+
 export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
     onSubmit,
     onCancel,
     onDashboardRedirect
 }) => {
     const { isSignedIn } = useUser();
-    const [step, setStep] = useState(1);
-
-    useEffect(() => {
-        const autoSubmit = async () => {
-            if (step === 4 && isSignedIn) {
-                try {
-                    await onSubmit(formData);
-                    setStep(5);
-                } catch (e) {
-                    console.error("Auto submit failed", e);
-                }
-            }
-        };
-        autoSubmit();
-    }, [step, isSignedIn]);
+    const [step, setStep] = useState<Step>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -67,32 +55,45 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
         reader.readAsDataURL(file);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-
-        // Prevent skipping steps via Enter
-        if (step === 1) {
-            if (isStep1Valid()) setStep(2);
-            return;
-        }
-        if (step === 2) {
-            if (isStep2Valid()) setStep(3);
-            return;
-        }
-        if (step === 3 && !isStep3Valid()) {
-            return;
-        }
-
-        setIsSubmitting(true);
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setStep(4);
-        setIsSubmitting(false);
-    };
-
     const isStep1Valid = () => !!formData.name && !!formData.email && !!formData.phone;
     const isStep2Valid = () => !!formData.title && !!formData.agency && !!formData.ppraNumber;
     const isStep3Valid = () => !!formData.areas && !!formData.bio;
+
+    const handleNextStep = () => {
+        if (step === 1 && isStep1Valid()) setStep(2);
+        else if (step === 2 && isStep2Valid()) setStep(3);
+        else if (step === 3 && isStep3Valid()) setStep(4);
+    };
+
+    const handleBack = () => {
+        if (step > 1 && step < 5) setStep((step - 1) as Step);
+    };
+
+    const handleSignUpSuccess = async () => {
+        setIsSubmitting(true);
+        try {
+            await onSubmit({
+                name: formData.name,
+                title: formData.title,
+                ppraNumber: formData.ppraNumber,
+                agency: formData.agency,
+                phone: formData.phone,
+                email: formData.email,
+                bio: formData.bio,
+                areas: formData.areas.split(',').map(a => a.trim()),
+                experience: formData.experience,
+                image: formData.image || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400',
+                rating: 4.5,
+                isVerified: false
+            });
+            setStep(5);
+        } catch (error) {
+            console.error('Failed to save agent data:', error);
+            throw error;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
 
     const renderStepIndicator = () => (
         <div className="flex items-center justify-center mb-8">
@@ -119,6 +120,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
                 <p className="text-slate-500">Create your agent identity</p>
             </div>
 
+            {/* Image Upload */}
             <div className="flex justify-center mb-6">
                 <div className="relative">
                     {formData.image ? (
@@ -141,17 +143,17 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
                     <User size={14} /> Full Name *
                 </label>
-                <Input value={formData.name} onChange={e => updateField('name', e.target.value)} placeholder="e.g. Sarah Smit" required />
+                <Input value={formData.name} onChange={e => updateField('name', e.target.value)} placeholder="e.g. Sarah Smith" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
                 <div>
                     <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2"><Smartphone size={14} /> Mobile *</label>
-                    <Input value={formData.phone} onChange={e => updateField('phone', e.target.value)} placeholder="+27 82 555 1234" required />
+                    <Input value={formData.phone} onChange={e => updateField('phone', e.target.value)} placeholder="+27 82 555 1234" />
                 </div>
                 <div>
                     <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2"><Mail size={14} /> Email *</label>
-                    <Input value={formData.email} onChange={e => updateField('email', e.target.value)} type="email" placeholder="sarah@agency.co.za" required />
+                    <Input value={formData.email} onChange={e => updateField('email', e.target.value)} type="email" placeholder="sarah@agency.co.za" />
                 </div>
             </div>
         </div>
@@ -166,17 +168,17 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
 
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2"><Award size={14} /> Job Title *</label>
-                <Input value={formData.title} onChange={e => updateField('title', e.target.value)} placeholder="e.g. Senior Partner / Intern Agent" required />
+                <Input value={formData.title} onChange={e => updateField('title', e.target.value)} placeholder="e.g. Senior Partner / Intern Agent" />
             </div>
 
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2"><Briefcase size={14} /> Agency *</label>
-                <Input value={formData.agency} onChange={e => updateField('agency', e.target.value)} placeholder="Enter your agency name" required />
+                <Input value={formData.agency} onChange={e => updateField('agency', e.target.value)} placeholder="Enter your agency name" />
             </div>
 
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2"><Award size={14} /> FFC / PPRA Number *</label>
-                <Input value={formData.ppraNumber} onChange={e => updateField('ppraNumber', e.target.value)} placeholder="2024123456" required />
+                <Input value={formData.ppraNumber} onChange={e => updateField('ppraNumber', e.target.value)} placeholder="2024123456" />
             </div>
         </div>
     );
@@ -190,7 +192,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
 
             <div>
                 <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2"><MapPin size={14} /> Operational Areas *</label>
-                <Input value={formData.areas} onChange={e => updateField('areas', e.target.value)} placeholder="e.g. Sea Point, Green Point, Camps Bay" required />
+                <Input value={formData.areas} onChange={e => updateField('areas', e.target.value)} placeholder="e.g. Sea Point, Green Point, Camps Bay" />
             </div>
 
             <div>
@@ -203,6 +205,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
                 />
             </div>
 
+            {/* Preview */}
             <div className="mt-8 p-6 bg-slate-50 rounded-xl border border-slate-200">
                 <h4 className="font-bold text-slate-900 mb-4">Profile Preview</h4>
                 <div className="flex items-center gap-4">
@@ -218,7 +221,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
         </div>
     );
 
-    const renderStep4 = () => (
+    const renderStep5Success = () => (
         <div className="text-center space-y-6 animate-in fade-in zoom-in duration-300 py-8">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <CheckCircle size={48} className="text-brand-green" />
@@ -240,7 +243,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
 
             <div className="pt-8">
                 <Button
-                    onClick={onDashboardRedirect || (() => window.location.reload())}
+                    onClick={onDashboardRedirect || (() => window.location.href = '/dashboard')}
                     variant="brand"
                     className="w-full py-6 text-lg shadow-xl"
                 >
@@ -253,74 +256,69 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 py-12 px-4">
             <div className="max-w-2xl mx-auto">
-                <div className="text-center mb-12">
-                    {step < 5 && step !== 4 && (
-                        <>
-                            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-teal-600 rounded-2xl mb-4 shadow-lg">
-                                <User size={32} className="text-white" />
-                            </div>
-                            <h1 className="text-4xl font-bold text-slate-900 mb-3">Agent Registration</h1>
-                            <p className="text-lg text-slate-600">Build your personal brand with us</p>
-                        </>
-                    )}
-                </div>
+                {/* Header */}
+                {step < 4 && (
+                    <div className="text-center mb-12">
+                        <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-brand-green to-teal-600 rounded-2xl mb-4 shadow-lg">
+                            <User size={32} className="text-white" />
+                        </div>
+                        <h1 className="text-4xl font-bold text-slate-900 mb-3">Agent Registration</h1>
+                        <p className="text-lg text-slate-600">Build your personal brand with us</p>
+                    </div>
+                )}
 
                 <Card className="p-8 md:p-12 shadow-xl">
-                    {step < 5 && renderStepIndicator()}
-                    <form onSubmit={handleSubmit}>
-                        {step === 1 && renderStep1()}
-                        {step === 2 && renderStep2()}
-                        {step === 3 && renderStep3()}
-                        {step === 4 && (
-                            isSignedIn ? (
-                                <div className="text-center py-12">
-                                    <h3 className="text-xl font-bold mb-4">Submitting Application...</h3>
-                                    <p className="text-slate-500">Please wait while we process your registration.</p>
-                                </div>
-                            ) : (
-                                <SignUpStep
-                                    role="AGENT"
-                                    registrationData={{
-                                        name: formData.name,
-                                        title: formData.title,
-                                        ppraNumber: formData.ppraNumber,
-                                        agency: formData.agency,
-                                        phone: formData.phone,
-                                        email: formData.email,
-                                        bio: formData.bio,
-                                        areas: formData.areas,
-                                        experience: formData.experience,
-                                        image: formData.image,
-                                    }}
-                                    onSuccess={async () => {
-                                        try {
-                                            await onSubmit(formData);
-                                        } catch (error) {
-                                            console.error('Failed to save agent data:', error);
-                                        }
-                                        setStep(5);
-                                    }}
-                                    onBack={() => setStep(3)}
-                                />
-                            )
-                        )}
-                        {step === 5 && renderStep4()}
+                    {step < 5 && step !== 4 && renderStepIndicator()}
 
-                        {step < 4 && (
-                            <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
-                                {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)} className="flex-1">Back</Button>}
-                                {step < 3 ? (
-                                    <Button type="button" variant="brand" onClick={() => setStep(step + 1)} disabled={step === 1 ? !isStep1Valid() : !isStep2Valid()} className="flex-1">Continue <ArrowRight size={16} className="ml-2" /></Button>
-                                ) : (
-                                    <Button type="button" variant="brand" onClick={() => setStep(4)} disabled={!isStep3Valid()} className="flex-1">
-                                        {isSignedIn ? 'Submit Application' : 'Continue to Account Setup'} <ArrowRight size={16} className="ml-2" />
-                                    </Button>
-                                )}
-                            </div>
-                        )}
-                    </form>
+                    {step === 1 && renderStep1()}
+                    {step === 2 && renderStep2()}
+                    {step === 3 && renderStep3()}
+                    {step === 4 && (
+                        <SignUpStep
+                            role="AGENT"
+                            registrationData={{
+                                name: formData.name,
+                                phone: formData.phone,
+                                email: formData.email,
+                                image: formData.image,
+                            }}
+                            onSuccess={handleSignUpSuccess}
+                            onBack={() => setStep(3)}
+                        />
+                    )}
+                    {step === 5 && renderStep5Success()}
+
+                    {/* Navigation Buttons */}
+                    {step < 4 && (
+                        <div className="flex gap-4 mt-8 pt-8 border-t border-slate-100">
+                            {step > 1 && (
+                                <Button type="button" variant="outline" onClick={handleBack} className="flex-1">
+                                    Back
+                                </Button>
+                            )}
+                            <Button
+                                type="button"
+                                variant="brand"
+                                onClick={handleNextStep}
+                                disabled={
+                                    (step === 1 && !isStep1Valid()) ||
+                                    (step === 2 && !isStep2Valid()) ||
+                                    (step === 3 && !isStep3Valid())
+                                }
+                                className="flex-1"
+                            >
+                                {step === 3 ? 'Continue to Account Setup' : 'Continue'}
+                                <ArrowRight size={16} className="ml-2" />
+                            </Button>
+                        </div>
+                    )}
                 </Card>
-                {onCancel && step < 5 && step !== 4 && <button onClick={onCancel} className="w-full mt-8 text-slate-400 hover:text-slate-600 font-medium text-sm">Cancel Registration</button>}
+
+                {onCancel && step < 4 && (
+                    <button onClick={onCancel} className="w-full mt-8 text-slate-400 hover:text-slate-600 font-medium text-sm">
+                        Cancel Registration
+                    </button>
+                )}
             </div>
         </div>
     );

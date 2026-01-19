@@ -41,10 +41,10 @@ export const AgentDetails: React.FC<AgentDetailsProps> = ({ agentId, onBack, onV
                     <div className="lg:col-span-1 space-y-6">
                         <div className="bg-white rounded-3xl p-8 border border-slate-100 shadow-sm text-center">
                             <div className="w-48 h-48 rounded-full overflow-hidden border-8 border-slate-50 mx-auto mb-6 shadow-inner ring-1 ring-slate-100">
-                                <img src={agent.image} className="w-full h-full object-cover" alt={agent.name} />
+                                <img src={agent.image || 'https://via.placeholder.com/200'} className="w-full h-full object-cover" alt={agent.name} />
                             </div>
                             <h1 className="text-3xl font-serif font-bold text-slate-900 mb-1">{agent.name}</h1>
-                            <p className="text-sm text-brand-green font-bold uppercase tracking-[0.2em] mb-6">{agent.title}</p>
+                            <p className="text-sm text-brand-green font-bold uppercase tracking-[0.2em] mb-6">{agent.title || 'Real Estate Agent'}</p>
 
                             <div className="grid grid-cols-2 gap-4 mb-8">
                                 <div className="p-3 bg-slate-50 rounded-2xl border border-slate-100">
@@ -100,7 +100,7 @@ export const AgentDetails: React.FC<AgentDetailsProps> = ({ agentId, onBack, onV
                                 Client Testimonials
                             </h2>
                             <div className="space-y-6">
-                                {agent.reviews.length === 0 ? (
+                                {(!agent.reviews || agent.reviews.length === 0) ? (
                                     <p className="text-slate-500 italic">No testimonials yet.</p>
                                 ) : (
                                     agent.reviews.map(review => (
