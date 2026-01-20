@@ -3,12 +3,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { Button } from '../components/ui/button';
 import { Home, Mail, Lock, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
     const navigate = useNavigate();
     const { signIn, getDashboardUrl, isSignedIn, isLoaded } = useAuth();
+    const { showToast } = useToast();
 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -49,10 +51,13 @@ export const LoginPage: React.FC = () => {
 
         try {
             await signIn(email.trim().toLowerCase(), password);
+            showToast("Successfully signed in", "success");
             // Navigation will happen via the useEffect above
         } catch (err: any) {
             console.error("Login failed:", err);
-            setError(err.message || 'Invalid email or password. Please try again.');
+            const msg = err.message || 'Invalid email or password. Please try again.';
+            setError(msg);
+            showToast(msg, "error");
         } finally {
             setIsSubmitting(false);
         }

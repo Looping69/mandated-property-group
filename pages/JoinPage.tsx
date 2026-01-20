@@ -6,12 +6,14 @@ import { AgencyRegistration } from '../components/AgencyRegistration';
 import { AgentRegistration } from '../components/AgentRegistration';
 import { useData } from '../contexts/DataContext';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 import { userService } from '../services/userService';
 
 export const JoinPage: React.FC = () => {
     const navigate = useNavigate();
     const { user, getDashboardUrl } = useAuth();
     const { addContractor, addAgency, addAgent } = useData();
+    const { showToast } = useToast();
 
     /**
      * Handle contractor registration completion
@@ -30,9 +32,11 @@ export const JoinPage: React.FC = () => {
             }
 
             // Redirect to contractor dashboard
+            showToast("Contractor registration successful!", "success");
             navigate('/maintenance-dashboard', { replace: true });
         } catch (e) {
             console.error("Contractor registration failed:", e);
+            showToast("Registration failed. Please try again.", "error");
             throw e; // Re-throw so the component can handle the error
         }
     };
@@ -55,9 +59,11 @@ export const JoinPage: React.FC = () => {
             }
 
             // Redirect to agency dashboard
+            showToast("Agency registration successful!", "success");
             navigate('/dashboard', { replace: true });
         } catch (e) {
             console.error("Agency registration failed:", e);
+            showToast("Agency registration failed.", "error");
             throw e;
         }
     };
@@ -79,9 +85,11 @@ export const JoinPage: React.FC = () => {
             }
 
             // Redirect to agent dashboard
+            showToast("Welcome! Your agent profile is active.", "success");
             navigate('/dashboard', { replace: true });
         } catch (e) {
             console.error("Agent registration failed:", e);
+            showToast("Failed to link agent profile.", "error");
             throw e;
         }
     };
