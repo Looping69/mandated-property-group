@@ -55,6 +55,15 @@ export const propertyService = {
         });
     },
 
+    // Update listing status (suspend/activate)
+    async updateStatus(id: string, status: string, token?: string): Promise<{ success: boolean }> {
+        return apiRequest<{ success: boolean }>(`/api/properties/${id}/status`, {
+            method: 'PUT',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: JSON.stringify({ id, status }),
+        });
+    },
+
     // Get single listing
     async getById(id: string): Promise<Listing | null> {
         const listings = await this.list();

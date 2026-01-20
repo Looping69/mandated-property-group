@@ -261,6 +261,19 @@ export const listMyProperties = api(
     }
 );
 
+interface SuccessResponse {
+    success: boolean;
+}
+
+// Update listing status (Admin/Suspend)
+export const updateListingStatus = api(
+    { expose: true, auth: true, method: "PUT", path: "/api/properties/:id/status" },
+    async ({ id, status }: { id: string; status: string }): Promise<SuccessResponse> => {
+        await db.exec`UPDATE listings SET status = ${status} WHERE id = ${id}`;
+        return { success: true };
+    }
+);
+
 export const getProperty = api(
     { expose: true, method: "GET", path: "/api/properties/:id" },
     async ({ id }: { id: string }): Promise<{ listing?: Listing }> => {

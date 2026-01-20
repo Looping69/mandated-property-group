@@ -18,6 +18,7 @@ export interface Agency {
     isFranchise: boolean;
     isVerified: boolean;
     createdAt: string;
+    status?: string;
 }
 
 export interface CreateAgencyParams {
@@ -59,35 +60,50 @@ interface AgencyAgentsResponse {
 
 export const agencyService = {
     // List all agencies
-    async list(): Promise<Agency[]> {
-        const response = await apiRequest<AgenciesListResponse>('/agencies');
+    async list(token?: string): Promise<Agency[]> {
+        const response = await apiRequest<AgenciesListResponse>('/api/agencies', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         return response.agencies || [];
     },
 
     // Get single agency by ID
     async getById(id: string): Promise<Agency | null> {
-        const response = await apiRequest<AgencyResponse>(`/agencies/${id}`);
+        const response = await apiRequest<AgencyResponse>(`/api/agencies/${id}`);
         return response.agency || null;
     },
 
     // Create a new agency
-    async create(params: CreateAgencyParams): Promise<Agency> {
-        return apiRequest<Agency>('/agencies', {
+    async create(params: CreateAgencyParams, token?: string): Promise<Agency> {
+        return apiRequest<Agency>('/api/agencies', {
             method: 'POST',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
             body: JSON.stringify(params),
         });
     },
 
     // Delete an agency
-    async delete(id: string): Promise<void> {
-        return apiRequest<void>(`/agencies/${id}`, {
+    async delete(id: string, token?: string): Promise<void> {
+        return apiRequest<void>(`/api/agencies/${id}`, {
             method: 'DELETE',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
     },
 
     // Get agents belonging to an agency
-    async getAgents(agencyId: string): Promise<AgencyAgent[]> {
-        const response = await apiRequest<AgencyAgentsResponse>(`/agencies/${agencyId}/agents`);
+    async getAgents(agencyId: string, token?: string): Promise<AgencyAgent[]> {
+        const response = await apiRequest<AgencyAgentsResponse>(`/api/agencies/${agencyId}/agents`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
         return response.agents || [];
+    },
+
+    // Update agency status (suspend/activate)
+    async updateStatus(id: string, status: string, token?: string): Promise<{ success: boolean }> {
+        return apiRequest<{ success: boolean }>(`/api/agencies/${id}/status`, {
+            method: 'PUT',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: JSON.stringify({ id, status }),
+        });
     },
 };

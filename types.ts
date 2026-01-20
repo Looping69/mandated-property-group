@@ -18,7 +18,7 @@ export interface Agent {
   reviews: Review[];
 }
 
-export type ListingStatus = 'active' | 'sold' | 'on_show' | 'reduced' | 'new';
+export type ListingStatus = 'active' | 'suspended' | 'sold' | 'on_show' | 'reduced' | 'new';
 
 export interface Listing {
   id: string;

@@ -2,29 +2,13 @@ import { apiRequest } from './apiConfig';
 import { Contractor } from '../types';
 
 // Extended contractor params for registration
-export interface CreateContractorParams {
-    name: string;
-    trade: string;
-    location: string;
-    phone?: string;
-    email?: string;
-    description?: string;
-    image?: string;
-    rating?: number;
-    hourlyRate?: number;
-    isVerified?: boolean;
-    // Additional registration fields
-    yearsExperience?: string;
-    certifications?: string;
-    emergencyService?: boolean;
-    insurance?: boolean;
-    license?: string;
+export interface ExtendedContractor extends Contractor {
+    status?: string;
 }
 
-// Response types matching Encore backend
-interface ContractorsListResponse {
-    contractors: Contractor[];
-}
+// ... existing CreateContractorParams ...
+
+// ... existing ContractorsListResponse ...
 
 export const contractorService = {
     // List all contractors
@@ -35,7 +19,7 @@ export const contractorService = {
         return response.contractors || [];
     },
 
-    // Create a new contractor
+    // ... existing create, delete, getById ...
     async create(data: CreateContractorParams, token?: string): Promise<Contractor> {
         return apiRequest<Contractor>('/api/contractors', {
             method: 'POST',
@@ -55,7 +39,6 @@ export const contractorService = {
         });
     },
 
-    // Delete a contractor
     async delete(id: string, token?: string): Promise<void> {
         return apiRequest<void>(`/api/contractors/${id}`, {
             method: 'DELETE',
@@ -63,7 +46,6 @@ export const contractorService = {
         });
     },
 
-    // Get contractor by ID (filter from list if single endpoint not available)
     async getById(id: string): Promise<Contractor | null> {
         try {
             const contractors = await this.list();
@@ -73,7 +55,7 @@ export const contractorService = {
         }
     },
 
-    // Get contractors by trade
+    // ... existing getByTrade, getByLocation ...
     async getByTrade(trade: string): Promise<Contractor[]> {
         const contractors = await this.list();
         return contractors.filter(c =>
@@ -81,11 +63,19 @@ export const contractorService = {
         );
     },
 
-    // Get contractors by location
     async getByLocation(location: string): Promise<Contractor[]> {
         const contractors = await this.list();
         return contractors.filter(c =>
             c.location.toLowerCase().includes(location.toLowerCase())
         );
+    },
+
+    // Update contractor status (suspend/activate)
+    async updateStatus(id: string, status: string, token?: string): Promise<{ success: boolean }> {
+        return apiRequest<{ success: boolean }>(`/api/contractors/${id}/status`, {
+            method: 'PUT',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: JSON.stringify({ id, status }),
+        });
     },
 };

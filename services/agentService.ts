@@ -9,6 +9,7 @@ export interface ExtendedAgent extends Agent {
     agency?: string;
     agencyId?: string;
     isVerified?: boolean;
+    status?: string;
 }
 
 export interface CreateAgentParams {
@@ -53,6 +54,15 @@ export const agentService = {
         return apiRequest<void>(`/api/agents/${id}`, {
             method: 'DELETE',
             headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+    },
+
+    // Update agent status (suspend/activate)
+    async updateStatus(id: string, status: string, token?: string): Promise<{ success: boolean }> {
+        return apiRequest<{ success: boolean }>(`/api/agents/${id}/status`, {
+            method: 'PUT',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            body: JSON.stringify({ id, status }),
         });
     },
 

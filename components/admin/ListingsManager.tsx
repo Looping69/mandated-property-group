@@ -1,12 +1,12 @@
 
 import React, { useState } from 'react';
-import {
-    Plus, XCircle, Search, Home, Edit, Sparkles, RefreshCw, Filter, Trash2, MapPin, Video
-} from 'lucide-react';
+import { Plus, XCircle, Search, Home, Edit, Sparkles, RefreshCw, Filter, Trash2, MapPin, Video } from 'lucide-react';
 import { Card, Badge, Input } from './Shared';
 import { Button } from '../ui/button';
 import { cn } from '../../lib/utils';
 import { Listing, Agent } from '../../types';
+import { propertyService } from '../../services/propertyService';
+
 
 interface ListingsManagerProps {
     listings: Listing[];
@@ -38,6 +38,18 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
     const [listingSearch, setListingSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("ALL");
     const [featuredFilter, setFeaturedFilter] = useState("ALL");
+
+    // Handler to toggle listing status (suspend/activate)
+    const handleToggleListingStatus = async (listingId: string, currentStatus: string) => {
+        const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+        try {
+            await propertyService.updateStatus(listingId, newStatus);
+            // Refresh listings - simple reload
+            window.location.reload();
+        } catch (e) {
+            console.error('Failed to update listing status', e);
+        }
+    };
 
     const totalValue = listings.reduce((acc, l) => acc + l.price, 0);
     const avgPrice = listings.length > 0 ? totalValue / listings.length : 0;
@@ -394,6 +406,12 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
                                         <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                             <button className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors shadow-md">
                                                 <Edit size={14} className="text-slate-600" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleToggleListingStatus(listing.id, listing.status)}
+                                                className="bg-white/90 backdrop-blur-sm p-2 rounded-full hover:bg-white transition-colors shadow-md mr-2"
+                                            >
+                                                {listing.status === 'active' ? 'Suspend' : 'Activate'}
                                             </button>
                                             <button
                                                 onClick={() => deleteListing(listing.id)}

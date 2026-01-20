@@ -3,6 +3,10 @@ import { db } from "./property";
 
 // --- Types ---
 
+interface SuccessResponse {
+    success: boolean;
+}
+
 export interface Agency {
     id: string;
     name: string;
@@ -19,8 +23,10 @@ export interface Agency {
     isFranchise: boolean;
     isVerified: boolean;
     createdAt: string;
+    status?: string;
 }
 
+// ... existing CreateAgencyParams ...
 export interface CreateAgencyParams {
     name: string;
     registrationNumber?: string;
@@ -50,7 +56,7 @@ export const listAgencies = api(
                 website, phone, email, description, logo_url as "logoUrl",
                 service_areas as "serviceAreas", team_size as "teamSize",
                 is_franchise as "isFranchise", is_verified as "isVerified",
-                created_at as "createdAt"
+                created_at as "createdAt", status
             FROM agencies
             ORDER BY name
         `;
@@ -71,9 +77,60 @@ export const listAgencies = api(
                 isFranchise: row.isFranchise,
                 isVerified: row.isVerified,
                 createdAt: row.createdAt.toISOString(),
+                status: row.status || 'active',
             });
         }
         return { agencies };
+    }
+);
+
+// Get single agency
+export const getAgency = api(
+    { expose: true, method: "GET", path: "/api/agencies/:id" },
+    async ({ id }: { id: string }): Promise<{ agency?: Agency }> => {
+        const rows = db.query`
+            SELECT 
+                id, name, registration_number as "registrationNumber",
+                principal_name as "principalName", office_address as "officeAddress",
+                website, phone, email, description, logo_url as "logoUrl",
+                service_areas as "serviceAreas", team_size as "teamSize",
+                is_franchise as "isFranchise", is_verified as "isVerified",
+                created_at as "createdAt", status
+            FROM agencies
+            WHERE id = ${id}
+        `;
+        for await (const row of rows) {
+            return {
+                agency: {
+                    id: row.id,
+                    name: row.name,
+                    registrationNumber: row.registrationNumber,
+                    principalName: row.principalName,
+                    officeAddress: row.officeAddress,
+                    website: row.website,
+                    phone: row.phone,
+                    email: row.email,
+                    description: row.description,
+                    logoUrl: row.logoUrl,
+                    serviceAreas: row.serviceAreas,
+                    teamSize: row.teamSize,
+                    isFranchise: row.isFranchise,
+                    isVerified: row.isVerified,
+                    createdAt: row.createdAt.toISOString(),
+                    status: row.status || 'active',
+                }
+            };
+        }
+        return {};
+    }
+);
+
+// Suspend/Activate agency
+export const updateAgencyStatus = api(
+    { expose: true, auth: true, method: "PUT", path: "/api/agencies/:id/status" },
+    async ({ id, status }: { id: string; status: string }): Promise<SuccessResponse> => {
+        await db.exec`UPDATE agencies SET status = ${status} WHERE id = ${id}`;
+        return { success: true };
     }
 );
 
