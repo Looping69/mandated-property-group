@@ -16,12 +16,6 @@ export const seedDatabase = api(
         };
 
         try {
-            // Ensure agent table has all required columns
-            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS title TEXT`;
-            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS image TEXT`;
-            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS sales TEXT`;
-            await db.exec`ALTER TABLE agents ADD COLUMN IF NOT EXISTS agency_id TEXT REFERENCES agencies(id) ON DELETE SET NULL`;
-
             // 1. Create Agency
             const agencyId = "ag_prestige_properties";
             const agencyExists = await db.queryRow`SELECT id FROM agencies WHERE id = ${agencyId}`;
@@ -253,9 +247,16 @@ export const seedDatabase = api(
                 }
             };
 
-        } catch (error) {
+        } catch (error: any) {
             console.error("Seeding error:", error);
-            throw error;
+            // Return the error message to help debugging
+            return {
+                message: "Failed to seed database",
+                summary: {
+                    error: error.message,
+                    stack: error.stack
+                }
+            };
         }
     }
 );
