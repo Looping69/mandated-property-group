@@ -1,9 +1,10 @@
 import { api } from "encore.dev/api";
 import { db } from "./property";
+import bcrypt from "bcryptjs";
 
 /**
  * Comprehensive database seeding with realistic South African property data
- * Seeds: 1 agency, 3 agents, 5 listings
+ * Seeds: 1 agency, 3 agents, 5 listings, 1 conveyancer, 4 contractors, 4 test users
  */
 export const seedDatabase = api(
     { expose: true, method: "POST", path: "/api/admin/seed-database" },
@@ -15,6 +16,7 @@ export const seedDatabase = api(
             listings: 0,
             conveyancers: 0,
             contractors: 0,
+            users: 0,
         };
 
         try {
@@ -331,6 +333,73 @@ export const seedDatabase = api(
                         VALUES (${contractor.id}, ${contractor.name}, ${contractor.trade}, ${contractor.location}, ${contractor.rating}, ${contractor.imageUrl}, ${contractor.phone}, ${contractor.email}, ${contractor.description}, ${contractor.isVerified}, ${contractor.hourlyRate}, ${now})
                     `;
                     summary.contractors++;
+                }
+            }
+
+            // 6. Create Test Users with known credentials
+            // Password for all test users: Test1234!
+            const testPassword = 'Test1234!';
+            const passwordHash = await bcrypt.hash(testPassword, 12);
+
+            const testUsers = [
+                {
+                    id: 'user_admin_test',
+                    email: 'admin@showhouse.co.za',
+                    role: 'ADMIN',
+                    firstName: 'Admin',
+                    lastName: 'User',
+                    phone: '+27 21 000 0001',
+                    isVerified: true,
+                    agentId: null,
+                    contractorId: null,
+                    agencyId: null,
+                },
+                {
+                    id: 'user_agent_test',
+                    email: 'agent@showhouse.co.za',
+                    role: 'AGENT',
+                    firstName: 'Test',
+                    lastName: 'Agent',
+                    phone: '+27 21 000 0002',
+                    isVerified: true,
+                    agentId: 'agent_sarah_mitchell',
+                    contractorId: null,
+                    agencyId: null,
+                },
+                {
+                    id: 'user_agency_test',
+                    email: 'agency@showhouse.co.za',
+                    role: 'AGENCY',
+                    firstName: 'Test',
+                    lastName: 'Agency',
+                    phone: '+27 21 000 0003',
+                    isVerified: true,
+                    agentId: null,
+                    contractorId: null,
+                    agencyId: 'ag_prestige_properties',
+                },
+                {
+                    id: 'user_contractor_test',
+                    email: 'contractor@showhouse.co.za',
+                    role: 'CONTRACTOR',
+                    firstName: 'Test',
+                    lastName: 'Contractor',
+                    phone: '+27 21 000 0004',
+                    isVerified: true,
+                    agentId: null,
+                    contractorId: 'contractor_plumb_pro',
+                    agencyId: null,
+                }
+            ];
+
+            for (const user of testUsers) {
+                const exists = await db.queryRow`SELECT id FROM users WHERE id = ${user.id} OR email = ${user.email}`;
+                if (!exists) {
+                    await db.exec`
+                        INSERT INTO users (id, email, password_hash, role, first_name, last_name, phone, is_verified, is_active, agent_id, contractor_id, agency_id, created_at, updated_at)
+                        VALUES (${user.id}, ${user.email}, ${passwordHash}, ${user.role}, ${user.firstName}, ${user.lastName}, ${user.phone}, ${user.isVerified}, true, ${user.agentId}, ${user.contractorId}, ${user.agencyId}, ${now}, ${now})
+                    `;
+                    summary.users++;
                 }
             }
 
