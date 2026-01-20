@@ -13,6 +13,8 @@ export const seedDatabase = api(
             agencies: 0,
             agents: 0,
             listings: 0,
+            conveyancers: 0,
+            contractors: 0,
         };
 
         try {
@@ -236,6 +238,99 @@ export const seedDatabase = api(
                         )
                     `;
                     summary.listings++;
+                }
+            }
+
+            // 4. Create Conveyancer
+            const conveyancers = [
+                {
+                    id: 'conv_adams_attorneys',
+                    name: 'Adams & Associates Conveyancers',
+                    specialist: 'Residential & Commercial Transfers',
+                    location: 'Cape Town CBD',
+                    rating: 4.8,
+                    imageUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=400&fit=crop',
+                    website: 'https://adamsconveyancers.co.za',
+                    phone: '+27 21 418 3300',
+                    isVerified: true,
+                }
+            ];
+
+            for (const conv of conveyancers) {
+                const exists = await db.queryRow`SELECT id FROM conveyancers WHERE id = ${conv.id}`;
+                if (!exists) {
+                    await db.exec`
+                        INSERT INTO conveyancers (id, name, specialist, location, rating, image_url, website, phone, is_verified, created_at)
+                        VALUES (${conv.id}, ${conv.name}, ${conv.specialist}, ${conv.location}, ${conv.rating}, ${conv.imageUrl}, ${conv.website}, ${conv.phone}, ${conv.isVerified}, ${now})
+                    `;
+                    summary.conveyancers++;
+                }
+            }
+
+            // 5. Create Contractors
+            const contractors = [
+                {
+                    id: 'contractor_plumb_pro',
+                    name: 'PlumbPro Cape Town',
+                    trade: 'Plumbing',
+                    location: 'Cape Town Metro',
+                    rating: 4.9,
+                    imageUrl: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=400&fit=crop',
+                    phone: '+27 82 555 1234',
+                    email: 'info@plumbpro.co.za',
+                    description: 'Licensed master plumbers with 15+ years experience. 24/7 emergency services. Specializing in geyser installations, leak detection, and bathroom renovations.',
+                    isVerified: true,
+                    hourlyRate: 450,
+                },
+                {
+                    id: 'contractor_spark_electric',
+                    name: 'Spark Electrical Services',
+                    trade: 'Electrical',
+                    location: 'Atlantic Seaboard',
+                    rating: 4.7,
+                    imageUrl: 'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?w=400&h=400&fit=crop',
+                    phone: '+27 83 666 2345',
+                    email: 'bookings@sparkelectric.co.za',
+                    description: 'Registered electricians providing COC certificates, solar installations, load shedding solutions, and smart home wiring.',
+                    isVerified: true,
+                    hourlyRate: 500,
+                },
+                {
+                    id: 'contractor_build_right',
+                    name: 'BuildRight Construction',
+                    trade: 'General Construction',
+                    location: 'Southern Suburbs',
+                    rating: 4.6,
+                    imageUrl: 'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=400&fit=crop',
+                    phone: '+27 84 777 3456',
+                    email: 'projects@buildright.co.za',
+                    description: 'Full-service building contractor. Extensions, renovations, new builds. NHBRC registered. Free quotes within 48 hours.',
+                    isVerified: true,
+                    hourlyRate: 650,
+                },
+                {
+                    id: 'contractor_paint_masters',
+                    name: 'Paint Masters SA',
+                    trade: 'Painting',
+                    location: 'Cape Town Metro',
+                    rating: 4.8,
+                    imageUrl: 'https://images.unsplash.com/photo-1562259949-e8e7689d7828?w=400&h=400&fit=crop',
+                    phone: '+27 85 888 4567',
+                    email: 'quote@paintmasters.co.za',
+                    description: 'Professional painters for interior and exterior. Waterproofing, damp proofing, and decorative finishes. Dulux approved applicators.',
+                    isVerified: true,
+                    hourlyRate: 380,
+                }
+            ];
+
+            for (const contractor of contractors) {
+                const exists = await db.queryRow`SELECT id FROM contractors WHERE id = ${contractor.id}`;
+                if (!exists) {
+                    await db.exec`
+                        INSERT INTO contractors (id, name, trade, location, rating, image_url, phone, email, description, is_verified, hourly_rate, created_at)
+                        VALUES (${contractor.id}, ${contractor.name}, ${contractor.trade}, ${contractor.location}, ${contractor.rating}, ${contractor.imageUrl}, ${contractor.phone}, ${contractor.email}, ${contractor.description}, ${contractor.isVerified}, ${contractor.hourlyRate}, ${now})
+                    `;
+                    summary.contractors++;
                 }
             }
 
