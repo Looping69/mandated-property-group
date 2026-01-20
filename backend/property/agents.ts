@@ -28,16 +28,16 @@ export const listAgents = api(
     { expose: true, method: "GET", path: "/api/agents" },
     async (): Promise<{ agents: Agent[] }> => {
         const agents: Agent[] = [];
-        const rows = db.query`SELECT id, name, email, phone FROM agents`;
+        const rows = db.query`SELECT id, name, email, phone, title, image, sales FROM agents`;
         for await (const row of rows) {
             agents.push({
                 id: row.id,
                 name: row.name,
                 email: row.email,
                 phone: row.phone,
-                // Note: The agents table in schema only has name, email, phone. 
-                // We might need to migrate to add title, image, sales if we want to store them.
-                // For now, I will omit fields not in the DB, or stick to the DB schema.
+                title: row.title || undefined,
+                image: row.image || undefined,
+                sales: row.sales || undefined,
             });
         }
         return { agents };
