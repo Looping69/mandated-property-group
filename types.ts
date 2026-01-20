@@ -16,6 +16,26 @@ export interface Agent {
   email: string;
   sales: string;
   reviews: Review[];
+  status: 'active' | 'suspended';
+}
+
+export interface Agency {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  officeAddress?: string;
+  website?: string;
+  logoUrl?: string;
+  registrationNumber?: string;
+  principalName?: string;
+  description?: string;
+  serviceAreas?: string;
+  teamSize?: string;
+  isFranchise?: boolean;
+  isVerified: boolean;
+  status: 'active' | 'suspended';
+  createdAt?: string;
 }
 
 export type ListingStatus = 'active' | 'suspended' | 'sold' | 'on_show' | 'reduced' | 'new';
@@ -88,6 +108,7 @@ export interface Contractor {
   description: string;
   isVerified: boolean;
   hourlyRate?: number;
+  status: 'active' | 'suspended';
 }
 
 export interface Conveyancer {
@@ -187,4 +208,4 @@ export interface User {
   updatedAt: string;
 }
 
-export type AdminView = 'OVERVIEW' | 'LISTINGS' | 'AGENTS' | 'LEADS' | 'VIRTUAL_TOURS' | 'MAINTENANCE' | 'CONVEYANCERS' | 'SETTINGS';
+export type AdminView = 'OVERVIEW' | 'LISTINGS' | 'AGENTS' | 'AGENCIES' | 'LEADS' | 'VIRTUAL_TOURS' | 'MAINTENANCE' | 'CONVEYANCERS' | 'SETTINGS';

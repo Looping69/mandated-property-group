@@ -54,9 +54,10 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
     const totalValue = listings.reduce((acc, l) => acc + l.price, 0);
     const avgPrice = listings.length > 0 ? totalValue / listings.length : 0;
     const featuredCount = listings.filter(l => l.isFeatured).length;
-    const soldCount = listings.filter(l => l.status === 'sold').length;
-    const activeCount = listings.filter(l => l.status !== 'sold').length;
+    const activeCount = listings.filter(l => l.status === 'active').length;
     const onShowCount = listings.filter(l => l.status === 'on_show').length;
+    const suspendedCount = listings.filter(l => l.status === 'suspended').length;
+    const soldCount = listings.filter(l => l.status === 'sold').length;
 
     const displayedListings = listings
         .filter(l =>
@@ -64,6 +65,7 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
                 (statusFilter === 'SOLD' && l.status === 'sold') ||
                 (statusFilter === 'ON_SHOW' && l.status === 'on_show') ||
                 (statusFilter === 'ACTIVE' && l.status === 'active') ||
+                (statusFilter === 'SUSPENDED' && l.status === 'suspended') ||
                 (statusFilter === 'FEATURED' && l.isFeatured)) &&
             (featuredFilter === 'ALL' || (featuredFilter === 'FEATURED' && l.isFeatured)) &&
             (l.title.toLowerCase().includes(listingSearch.toLowerCase()) ||
@@ -89,7 +91,7 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
             </div>
 
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
                 <Card className="p-4 text-center hover:shadow-md transition-shadow cursor-pointer" onClick={() => setStatusFilter('ALL')}>
                     <p className="text-3xl font-bold text-slate-900">{listings.length}</p>
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Total</p>
@@ -101,6 +103,10 @@ export const ListingsManager: React.FC<ListingsManagerProps> = ({
                 <Card className="p-4 text-center hover:shadow-md transition-shadow cursor-pointer" onClick={() => setStatusFilter('ON_SHOW')}>
                     <p className="text-3xl font-bold text-amber-600">{onShowCount}</p>
                     <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">On Show</p>
+                </Card>
+                <Card className="p-4 text-center hover:shadow-md transition-shadow cursor-pointer" onClick={() => setStatusFilter('SUSPENDED')}>
+                    <p className="text-3xl font-bold text-slate-400">{suspendedCount}</p>
+                    <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">Suspended</p>
                 </Card>
                 <Card className="p-4 text-center hover:shadow-md transition-shadow cursor-pointer" onClick={() => setStatusFilter('SOLD')}>
                     <p className="text-3xl font-bold text-red-500">{soldCount}</p>

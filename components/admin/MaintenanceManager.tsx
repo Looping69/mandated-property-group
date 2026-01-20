@@ -18,6 +18,7 @@ interface MaintenanceManagerProps {
     newContractor: Partial<Contractor>;
     setNewContractor: React.Dispatch<React.SetStateAction<Partial<Contractor>>>;
     handleCreateContractor: (e: React.FormEvent) => void;
+    updateContractorStatus: (id: string, status: string) => Promise<void>;
     deleteContractor: (id: string) => void;
 }
 
@@ -29,6 +30,7 @@ export const MaintenanceManager: React.FC<MaintenanceManagerProps> = ({
     newContractor,
     setNewContractor,
     handleCreateContractor,
+    updateContractorStatus,
     deleteContractor
 }) => {
     // Local state for enhanced features
@@ -454,19 +456,33 @@ export const MaintenanceManager: React.FC<MaintenanceManagerProps> = ({
                                 <div className="p-5">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex-1">
-                                            <h3 className="font-bold text-slate-900 text-lg mb-1">{c.name}</h3>
+                                            <h3 className="font-bold text-slate-900 text-lg mb-1 flex items-center gap-2">
+                                                {c.name}
+                                                {c.status === 'suspended' && <Badge variant="neutral" className="text-[8px] bg-slate-100 text-slate-400">SUSPENDED</Badge>}
+                                            </h3>
                                             <Badge variant="purple" className="mb-2">{c.trade}</Badge>
                                         </div>
                                         {userRole === 'AGENCY' && (
-                                            <button
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    deleteContractor(c.id);
-                                                }}
-                                                className="text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                                            >
-                                                <Trash2 size={16} />
-                                            </button>
+                                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        updateContractorStatus(c.id, c.status === 'suspended' ? 'active' : 'suspended');
+                                                    }}
+                                                    className="text-slate-400 hover:text-brand-purple transition-colors text-xs font-bold uppercase"
+                                                >
+                                                    {c.status === 'suspended' ? 'Activate' : 'Suspend'}
+                                                </button>
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        deleteContractor(c.id);
+                                                    }}
+                                                    className="text-slate-300 hover:text-red-500 transition-colors"
+                                                >
+                                                    <Trash2 size={16} />
+                                                </button>
+                                            </div>
                                         )}
                                     </div>
 

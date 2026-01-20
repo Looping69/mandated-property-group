@@ -13,6 +13,7 @@ interface AgentsManagerProps {
     setNewAgent: React.Dispatch<React.SetStateAction<Partial<Agent>>>;
     handleCreateAgent: (e: React.FormEvent) => void;
     handleAgentImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
+    updateAgentStatus: (id: string, status: string) => Promise<void>;
     deleteAgent: (id: string) => void;
 }
 
@@ -24,8 +25,16 @@ export const AgentsManager: React.FC<AgentsManagerProps> = ({
     setNewAgent,
     handleCreateAgent,
     handleAgentImageUpload,
+    updateAgentStatus,
     deleteAgent
 }) => {
+    const [statusFilter, setStatusFilter] = useState("ALL");
+
+    const filteredAgents = agents.filter(agent => {
+        if (statusFilter === "ALL") return true;
+        return agent.status === statusFilter.toLowerCase();
+    });
+
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-center">
@@ -33,9 +42,31 @@ export const AgentsManager: React.FC<AgentsManagerProps> = ({
                     <h2 className="text-3xl font-serif font-bold text-slate-900">Agents</h2>
                     <p className="text-slate-500 text-sm">Manage your team.</p>
                 </div>
-                <Button variant={isAddingAgent ? "outline" : "brand"} onClick={() => setIsAddingAgent(!isAddingAgent)}>
-                    {isAddingAgent ? <><XCircle size={16} className="mr-2" /> Cancel</> : <><Plus size={16} className="mr-2" /> Add Agent</>}
-                </Button>
+                <div className="flex gap-3">
+                    <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+                        <button
+                            onClick={() => setStatusFilter("ALL")}
+                            className={cn("px-3 py-1 text-xs font-bold rounded-md transition-colors", statusFilter === "ALL" ? "bg-brand-green text-white" : "text-slate-500 hover:bg-slate-50")}
+                        >
+                            All
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter("ACTIVE")}
+                            className={cn("px-3 py-1 text-xs font-bold rounded-md transition-colors", statusFilter === "ACTIVE" ? "bg-brand-green text-white" : "text-slate-500 hover:bg-slate-50")}
+                        >
+                            Active
+                        </button>
+                        <button
+                            onClick={() => setStatusFilter("SUSPENDED")}
+                            className={cn("px-3 py-1 text-xs font-bold rounded-md transition-colors", statusFilter === "SUSPENDED" ? "bg-brand-green text-white" : "text-slate-500 hover:bg-slate-50")}
+                        >
+                            Suspended
+                        </button>
+                    </div>
+                    <Button variant={isAddingAgent ? "outline" : "brand"} onClick={() => setIsAddingAgent(!isAddingAgent)}>
+                        {isAddingAgent ? <><XCircle size={16} className="mr-2" /> Cancel</> : <><Plus size={16} className="mr-2" /> Add Agent</>}
+                    </Button>
+                </div>
             </div>
 
             {isAddingAgent ? (
@@ -105,18 +136,29 @@ export const AgentsManager: React.FC<AgentsManagerProps> = ({
                 </Card>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {agents.map(agent => (
+                    {filteredAgents.map(agent => (
                         <div key={agent.id} className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-center relative group">
-                            <button
-                                onClick={() => deleteAgent(agent.id)}
-                                className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
-                            >
-                                <Trash2 size={16} />
-                            </button>
+                            <div className="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button
+                                    onClick={() => updateAgentStatus(agent.id, agent.status === 'suspended' ? 'active' : 'suspended')}
+                                    className="text-slate-400 hover:text-brand-purple transition-colors text-xs font-bold uppercase"
+                                >
+                                    {agent.status === 'suspended' ? 'Activate' : 'Suspend'}
+                                </button>
+                                <button
+                                    onClick={() => deleteAgent(agent.id)}
+                                    className="text-slate-300 hover:text-red-500 transition-colors"
+                                >
+                                    <Trash2 size={16} />
+                                </button>
+                            </div>
                             <div className="w-20 h-20 mx-auto bg-slate-200 rounded-full overflow-hidden mb-4 border-2 border-brand-green">
                                 <img src={agent.image} alt={agent.name} className="w-full h-full object-cover" />
                             </div>
-                            <h3 className="font-bold text-slate-900">{agent.name}</h3>
+                            <h3 className="font-bold text-slate-900 flex items-center justify-center gap-2">
+                                {agent.name}
+                                {agent.status === 'suspended' && <Badge variant="neutral" className="text-[8px] bg-slate-100 text-slate-400">SUSPENDED</Badge>}
+                            </h3>
                             <p className="text-xs text-brand-purple font-bold uppercase tracking-wide mb-2">{agent.title}</p>
                             <div className="text-xs text-slate-500 mb-4">{agent.email}</div>
                             <div className="flex justify-center gap-2">

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Home, LayoutDashboard, Users, Scale, Hammer, MessageSquare, Video, Settings, LogOut } from 'lucide-react';
+import { Home, LayoutDashboard, Users, Building2, Scale, Hammer, MessageSquare, Video, Settings, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { AdminView, UserRole } from '../../types';
 
@@ -58,6 +58,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {/* Only Agencies can manage Agents */}
                 {userRole === 'AGENCY' && (
                     <SidebarItem view="AGENTS" icon={Users} label="Agents" activeView={activeView} setActiveView={setActiveView} />
+                )}
+
+                {/* Only Admin can manage Agencies */}
+                {userRole === 'ADMIN' && (
+                    <SidebarItem view="AGENCIES" icon={Building2} label="Agencies" activeView={activeView} setActiveView={setActiveView} />
                 )}
 
                 <SidebarItem view="CONVEYANCERS" icon={Scale} label="Conveyancers" activeView={activeView} setActiveView={setActiveView} />

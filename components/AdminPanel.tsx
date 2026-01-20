@@ -14,6 +14,7 @@ import { Sidebar } from './admin/Sidebar';
 import { OverviewDashboard } from './admin/OverviewDashboard';
 import { ListingsManager } from './admin/ListingsManager';
 import { AgentsManager } from './admin/AgentsManager';
+import { AgenciesManager } from './admin/AgenciesManager';
 import { ConveyancersManager } from './admin/ConveyancersManager';
 import { MaintenanceManager } from './admin/MaintenanceManager';
 import { InquiryManager } from './admin/InquiryManager';
@@ -34,6 +35,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
   const {
     listings,
     agents,
+    agencies,
     inquiries,
     contractors,
     conveyancers,
@@ -43,12 +45,15 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     addListing,
     deleteListing,
     addAgent,
+    updateAgentStatus,
     deleteAgent,
     addContractor,
+    updateContractorStatus,
     deleteContractor,
     addConveyancer,
     deleteConveyancer,
     deleteTour,
+    updateAgencyStatus,
     updateInquiryStatus
   } = useData();
 
@@ -278,7 +283,14 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   setNewAgent={setNewAgent}
                   handleCreateAgent={handleCreateAgent}
                   handleAgentImageUpload={handleAgentImageUpload}
+                  updateAgentStatus={updateAgentStatus}
                   deleteAgent={deleteAgent}
+                />
+              )}
+              {activeView === 'AGENCIES' && userRole === 'ADMIN' && (
+                <AgenciesManager
+                  agencies={agencies}
+                  updateAgencyStatus={updateAgencyStatus}
                 />
               )}
               {activeView === 'CONVEYANCERS' && (
@@ -303,6 +315,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   newContractor={newContractor}
                   setNewContractor={setNewContractor}
                   handleCreateContractor={handleCreateContractor}
+                  updateContractorStatus={updateContractorStatus}
                   deleteContractor={deleteContractor}
                 />
               )}

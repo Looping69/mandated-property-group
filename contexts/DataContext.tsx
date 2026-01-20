@@ -9,6 +9,7 @@ import { inquiryService } from '../services/inquiryService';
 import { contractorService } from '../services/contractorService';
 import { conveyancerService } from '../services/conveyancerService';
 import { tourService } from '../services/tourService';
+import { agencyService } from '../services/agencyService';
 import { maintenanceService } from '../services/maintenanceService';
 
 
@@ -20,6 +21,7 @@ interface DataContextType {
   myListings: Listing[];
   inquiries: Inquiry[];
   virtualTours: VirtualTour[];
+  agencies: Agency[];
   contractors: Contractor[];
   conveyancers: Conveyancer[];
   maintenanceRequests: MaintenanceRequest[];
@@ -30,7 +32,9 @@ interface DataContextType {
   deleteListing: (id: string) => Promise<void>;
   addAgent: (agent: Agent | Omit<Agent, 'id'>) => Promise<Agent>;
   updateAgent: (agent: Agent) => void;
+  updateAgentStatus: (id: string, status: string) => Promise<void>;
   deleteAgent: (id: string) => void;
+  updateAgencyStatus: (id: string, status: string) => Promise<void>;
   addInquiry: (inquiry: Omit<Inquiry, 'id' | 'date' | 'status'>) => Promise<void>;
   updateInquiryStatus: (id: string, status: string) => Promise<void>;
   addReview: (agentId: string, review: Review) => void;
@@ -39,7 +43,7 @@ interface DataContextType {
   updateTour: (tour: VirtualTour) => void;
   deleteTour: (id: string) => Promise<void>;
   addContractor: (contractor: Omit<Contractor, 'id'>) => Promise<Contractor>;
-  addAgency?: (agency: any) => Promise<any>;
+  updateContractorStatus: (id: string, status: string) => Promise<void>;
   deleteContractor: (id: string) => Promise<void>;
   addConveyancer: (conveyancer: Omit<Conveyancer, 'id'>) => Promise<void>;
   deleteConveyancer: (id: string) => Promise<void>;
@@ -58,6 +62,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [myListings, setMyListings] = useState<Listing[]>([]);
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [virtualTours, setVirtualTours] = useState<VirtualTour[]>([]);
+  const [agencies, setAgencies] = useState<Agency[]>([]);
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [conveyancers, setConveyancers] = useState<Conveyancer[]>([]);
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
@@ -68,9 +73,10 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const token = isSignedIn ? await getToken() : undefined;
-      const [listings, agents, contractors, conveyancers] = await Promise.all([
+      const [listings, agents, agencies, contractors, conveyancers] = await Promise.all([
         propertyService.list(token || undefined).catch(() => []),
         agentService.list(token || undefined).catch(() => []),
+        agencyService.list(token || undefined).catch(() => []),
         contractorService.list(token || undefined).catch(() => []),
         conveyancerService.list(token || undefined).catch(() => []),
       ]);
@@ -93,6 +99,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setListings(listings);
       setMyListings(myListings);
       setAgents(agents);
+      setAgencies(agencies);
       setInquiries(inquiries);
       setContractors(contractors);
       setConveyancers(conveyancers);
@@ -175,6 +182,17 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAgents(prev => prev.filter(a => a.id !== id));
     }
   };
+  const updateAgentStatus = async (id: string, status: string) => {
+    try {
+      const token = await getToken();
+      await agentService.updateStatus(id, status, token || undefined);
+      setAgents(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+    } catch (err) {
+      console.error("Failed to update agent status:", err);
+      throw err;
+    }
+  };
+
   const addReview = (agentId: string, review: Review) => {
     setAgents(prev => prev.map(a => a.id === agentId ? { ...a, reviews: [review, ...a.reviews] } : a));
   };
@@ -255,13 +273,26 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Agencies (New)
-  // Assuming agencyService is imported
-  const addAgency = async (data: any) => {
-    // Stub for agency creation
-    // const newAgency = await agencyService.create(data);
-    // setAgencies...
-    return { id: 'test', ...data };
+  const updateContractorStatus = async (id: string, status: string) => {
+    try {
+      const token = await getToken();
+      await contractorService.updateStatus(id, status, token || undefined);
+      setContractors(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+    } catch (err) {
+      console.error('Failed to update contractor status:', err);
+      throw err;
+    }
+  };
+
+  const updateAgencyStatus = async (id: string, status: string) => {
+    try {
+      const token = await getToken();
+      await agencyService.updateStatus(id, status, token || undefined);
+      setAgencies(prev => prev.map(a => a.id === id ? { ...a, status: status as 'active' | 'suspended' } : a));
+    } catch (err) {
+      console.error('Failed to update agency status:', err);
+      throw err;
+    }
   };
 
   const deleteContractor = async (id: string) => {
@@ -334,13 +365,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <DataContext.Provider value={{
-      agents, listings, myListings, inquiries, virtualTours, contractors, conveyancers, maintenanceRequests,
+      agents, agencies, listings, myListings, inquiries, virtualTours, contractors, conveyancers, maintenanceRequests,
       isLoading, error,
       addListing, updateListing, deleteListing,
-      addAgent, updateAgent, deleteAgent, addReview,
+      addAgent, updateAgent, updateAgentStatus, deleteAgent, addReview,
+      updateAgencyStatus,
       addInquiry, updateInquiryStatus,
       addTour, addTourStop, updateTour, deleteTour,
-      addContractor, deleteContractor,
+      addContractor, updateContractorStatus, deleteContractor,
       addConveyancer, deleteConveyancer,
       addMaintenanceRequest, updateMaintenanceRequest, deleteMaintenanceRequest,
       addAgency,

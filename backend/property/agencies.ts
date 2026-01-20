@@ -134,45 +134,6 @@ export const updateAgencyStatus = api(
     }
 );
 
-// Get single agency
-export const getAgency = api(
-    { expose: true, method: "GET", path: "/api/agencies/:id" },
-    async ({ id }: { id: string }): Promise<{ agency?: Agency }> => {
-        const rows = db.query`
-            SELECT 
-                id, name, registration_number as "registrationNumber",
-                principal_name as "principalName", office_address as "officeAddress",
-                website, phone, email, description, logo_url as "logoUrl",
-                service_areas as "serviceAreas", team_size as "teamSize",
-                is_franchise as "isFranchise", is_verified as "isVerified",
-                created_at as "createdAt"
-            FROM agencies
-            WHERE id = ${id}
-        `;
-        for await (const row of rows) {
-            return {
-                agency: {
-                    id: row.id,
-                    name: row.name,
-                    registrationNumber: row.registrationNumber,
-                    principalName: row.principalName,
-                    officeAddress: row.officeAddress,
-                    website: row.website,
-                    phone: row.phone,
-                    email: row.email,
-                    description: row.description,
-                    logoUrl: row.logoUrl,
-                    serviceAreas: row.serviceAreas,
-                    teamSize: row.teamSize,
-                    isFranchise: row.isFranchise,
-                    isVerified: row.isVerified,
-                    createdAt: row.createdAt.toISOString(),
-                }
-            };
-        }
-        return {};
-    }
-);
 
 // Create agency
 export const createAgency = api(
