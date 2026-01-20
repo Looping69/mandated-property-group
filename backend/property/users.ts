@@ -1,6 +1,7 @@
-import { api, APIError } from "encore.dev/api";
-import { db } from "./property";
+import { api, APIError, Header } from "encore.dev/api";
+import { db, AuthData } from "./property";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 
 // ============================================================================
 // TYPES
@@ -59,12 +60,7 @@ function generateId(prefix: string): string {
 
 // Generate session token
 function generateToken(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let token = '';
-    for (let i = 0; i < 64; i++) {
-        token += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return token;
+    return crypto.randomBytes(48).toString('base64');
 }
 
 /**
@@ -79,6 +75,9 @@ export const signup = api(
         }
         if (!params.password || params.password.length < 8) {
             throw APIError.invalidArgument("Password must be at least 8 characters");
+        }
+        if (!/[A-Z]/.test(params.password) || !/[a-z]/.test(params.password) || !/[0-9]/.test(params.password)) {
+            throw APIError.invalidArgument("Password must contain uppercase, lowercase, and a number");
         }
         if (!params.firstName || !params.lastName) {
             throw APIError.invalidArgument("First name and last name are required");
@@ -301,7 +300,7 @@ interface UpdateUserParams {
  * Get user by ID
  */
 export const getUserById = api(
-    { expose: true, method: "GET", path: "/api/users/:id" },
+    { expose: true, auth: true, method: "GET", path: "/api/users/:id" },
     async ({ id }: { id: string }): Promise<{ user: User | null }> => {
         const row = await db.queryRow`
             SELECT 
@@ -342,7 +341,7 @@ export const getUserById = api(
  * Get user by email
  */
 export const getUserByEmail = api(
-    { expose: true, method: "GET", path: "/api/users/email/:email" },
+    { expose: true, auth: true, method: "GET", path: "/api/users/email/:email" },
     async ({ email }: { email: string }): Promise<{ user: User | null }> => {
         const row = await db.queryRow`
             SELECT 
@@ -383,8 +382,16 @@ export const getUserByEmail = api(
  * Update user
  */
 export const updateUser = api(
-    { expose: true, method: "PUT", path: "/api/users/:id" },
-    async ({ id, ...updates }: { id: string } & UpdateUserParams): Promise<{ success: boolean }> => {
+    { expose: true, auth: true, method: "PUT", path: "/api/users/:id" },
+    async (params: { id: string; authorization: Header<"Authorization"> } & UpdateUserParams): Promise<{ success: boolean }> => {
+        const { id, authorization, ...updates } = params;
+        const authData = await getUserFromHeader(authorization);
+
+        // Authorization check: Only ADMIN or the user themselves can update
+        if (authData.role !== 'ADMIN' && authData.userID !== id) {
+            throw APIError.permissionDenied("You do not have permission to update this user");
+        }
+
         const now = new Date();
 
         await db.exec`
@@ -408,11 +415,17 @@ export const updateUser = api(
 );
 
 /**
- * List all users (admin)
+ * List all users (admin only)
  */
 export const listUsers = api(
-    { expose: true, method: "GET", path: "/api/users" },
-    async (): Promise<{ users: User[] }> => {
+    { expose: true, auth: true, method: "GET", path: "/api/users" },
+    async (params: { authorization: Header<"Authorization"> }): Promise<{ users: User[] }> => {
+        const authData = await getUserFromHeader(params.authorization);
+
+        if (authData.role !== 'ADMIN') {
+            throw APIError.permissionDenied("Admin access required");
+        }
+
         const users: User[] = [];
         const rows = db.query`
             SELECT 
@@ -448,11 +461,18 @@ export const listUsers = api(
 );
 
 /**
- * Get users by role
+ * Get users by role (admin only)
  */
 export const getUsersByRole = api(
-    { expose: true, method: "GET", path: "/api/users/role/:role" },
-    async ({ role }: { role: string }): Promise<{ users: User[] }> => {
+    { expose: true, auth: true, method: "GET", path: "/api/users/role/:role" },
+    async (params: { role: string; authorization: Header<"Authorization"> }): Promise<{ users: User[] }> => {
+        const { role, authorization } = params;
+        const authData = await getUserFromHeader(authorization);
+
+        if (authData.role !== 'ADMIN') {
+            throw APIError.permissionDenied("Admin access required");
+        }
+
         const users: User[] = [];
         const rows = db.query`
             SELECT 
@@ -487,3 +507,30 @@ export const getUsersByRole = api(
         return { users };
     }
 );
+
+/**
+ * Internal helper to validate session and get user data
+ * Duplicated from property.ts for convenience in this module
+ */
+async function getUserFromHeader(authorization: string): Promise<AuthData> {
+    const token = authorization.replace("Bearer ", "");
+    const row = await db.queryRow`
+        SELECT 
+            s.user_id as "userID",
+            u.role as "role",
+            u.agent_id as "agentID",
+            u.agency_id as "agencyID",
+            u.contractor_id as "contractorID"
+        FROM sessions s
+        JOIN users u ON s.user_id = u.id
+        WHERE s.token = ${token} AND s.expires_at > NOW()
+    `;
+    if (!row) throw APIError.unauthenticated("invalid session");
+    return {
+        userID: row.userID,
+        role: row.role,
+        agentID: row.agentID || undefined,
+        agencyID: row.agencyID || undefined,
+        contractorID: row.contractorID || undefined
+    };
+}

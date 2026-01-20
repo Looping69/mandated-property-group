@@ -5,11 +5,11 @@
  */
 
 const getBaseUrl = (): string => {
-    // Priority 1: Environment variable
+    // Priority 1: Environment variable (defined in vite.config.ts)
     const envUrl = process.env.ENCORE_API_URL;
     if (envUrl && envUrl.trim() !== "") return envUrl;
 
-    // Priority 2: Localhost development
+    // Priority 2: Localhost development fallback
     if (typeof window !== "undefined") {
         const { hostname } = window.location;
         if (hostname === "localhost" || hostname === "127.0.0.1") {
@@ -17,7 +17,12 @@ const getBaseUrl = (): string => {
         }
     }
 
-    // Default: relative path for production
+    // Warning for production build with no API URL
+    if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
+        console.warn('API_URL is missing in production environment');
+    }
+
+    // Default: relative path for production (works if frontend & backend are on same domain/rewrites)
     return "";
 };
 

@@ -68,16 +68,27 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       const token = isSignedIn ? await getToken() : undefined;
-      const [listings, myListings, agents, inquiries, contractors, conveyancers, tours, maintenance] = await Promise.all([
+      const [listings, agents, contractors, conveyancers] = await Promise.all([
         propertyService.list(token || undefined).catch(() => []),
-        token ? propertyService.listMy(token).catch(() => []) : Promise.resolve([]),
         agentService.list(token || undefined).catch(() => []),
-        inquiryService.list(token || undefined).catch(() => []),
         contractorService.list(token || undefined).catch(() => []),
         conveyancerService.list(token || undefined).catch(() => []),
-        tourService.list(token || undefined).catch(() => []),
-        maintenanceService.getAll(token || undefined).catch(() => []),
       ]);
+
+      // Only fetch protected data if we have a token
+      let myListings: Listing[] = [];
+      let inquiries: Inquiry[] = [];
+      let tours: VirtualTour[] = [];
+      let maintenance: MaintenanceRequest[] = [];
+
+      if (token) {
+        [myListings, inquiries, tours, maintenance] = await Promise.all([
+          propertyService.listMy(token).catch(() => []),
+          inquiryService.list(token).catch(() => []),
+          tourService.list(token).catch(() => []),
+          maintenanceService.getAll(token).catch(() => []),
+        ]);
+      }
 
       setListings(listings);
       setMyListings(myListings);

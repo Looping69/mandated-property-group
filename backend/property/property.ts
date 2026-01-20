@@ -33,7 +33,7 @@ interface AuthParams {
     authorization: Header<"Authorization">;
 }
 
-interface AuthData {
+export interface AuthData {
     userID: string;
     role: string;
     agentID?: string;
@@ -151,11 +151,24 @@ export interface CreateInquiryParams {
 
 // --- API Endpoints ---
 
-// Home / Health Check
+// Home / Health Check / DB Ping
 export const home = api(
     { expose: true, method: "GET", path: "/" },
     async () => {
-        return { message: "Mandated Property Group API is Online" };
+        try {
+            await db.exec`SELECT 1`;
+            return {
+                status: "online",
+                message: "Mandated Property Group API is Online",
+                database: "connected"
+            };
+        } catch (e) {
+            return {
+                status: "degraded",
+                message: "API is online but database is unreachable",
+                database: "disconnected"
+            };
+        }
     }
 );
 
