@@ -5,9 +5,15 @@
  */
 
 const getBaseUrl = (): string => {
-    // Priority 1: Environment variable (defined in vite.config.ts)
-    const envUrl = process.env.ENCORE_API_URL;
-    if (envUrl && envUrl.trim() !== "") return envUrl;
+    // Priority 1: Environment variable (defined in vite.config.ts or .env)
+    // Try both Vite-style and process-style
+    const envUrl = (import.meta.env?.VITE_ENCORE_API_URL as string) ||
+        (process.env.ENCORE_API_URL as string);
+
+    if (envUrl && envUrl.trim() !== "") {
+        // Ensure the URL doesn't end with a slash as we prepend it in apiRequest
+        return envUrl.replace(/\/$/, "");
+    }
 
     // Priority 2: Localhost development fallback
     if (typeof window !== "undefined") {
@@ -17,9 +23,9 @@ const getBaseUrl = (): string => {
         }
     }
 
-    // Warning for production build with no API URL
+    // Warning for production build with no API URL and no rewrite capability
     if (typeof process !== 'undefined' && process.env.NODE_ENV === 'production') {
-        console.warn('API_URL is missing in production environment');
+        console.info('API calls will be made relative to the current domain (relying on rewrites)');
     }
 
     // Default: relative path for production (works if frontend & backend are on same domain/rewrites)
@@ -67,13 +73,22 @@ export async function apiRequest<T>(
 
     // Handle errors
     if (!response.ok) {
-        let errorMsg = `Request failed: ${response.status} ${response.statusText}`;
+        let errorMsg = `API Error: ${response.status} ${response.statusText}`;
+        let details = '';
         try {
             const error = await response.json();
             errorMsg = error.message || error.error || errorMsg;
+            details = JSON.stringify(error);
         } catch {
             // No JSON body
         }
+
+        console.error(`[API Request Failed] ${options.method || 'GET'} ${url}`, {
+            status: response.status,
+            message: errorMsg,
+            details
+        });
+
         throw new Error(errorMsg);
     }
 

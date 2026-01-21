@@ -84,8 +84,9 @@ export const signup = api(
         }
 
         // Check if user already exists
+        const email = params.email.toLowerCase().trim();
         const existing = await db.queryRow`
-            SELECT id FROM users WHERE email = ${params.email}
+            SELECT id FROM users WHERE email = ${email}
         `;
         if (existing) {
             throw APIError.alreadyExists("An account with this email already exists");
@@ -104,7 +105,7 @@ export const signup = api(
                 agent_id, contractor_id, agency_id,
                 is_verified, is_active, created_at, updated_at
             ) VALUES (
-                ${userId}, ${params.email}, ${passwordHash}, ${params.role},
+                ${userId}, ${email}, ${passwordHash}, ${params.role},
                 ${params.firstName}, ${params.lastName}, ${params.phone || null}, ${params.imageUrl || null},
                 ${params.agentId || null}, ${params.contractorId || null}, ${params.agencyId || null},
                 false, true, ${now}, ${now}
@@ -152,6 +153,7 @@ export const login = api(
         }
 
         // Find user by email
+        const email = params.email.toLowerCase().trim();
         const row = await db.queryRow`
             SELECT 
                 id, email, password_hash, role,
@@ -159,7 +161,7 @@ export const login = api(
                 agent_id, contractor_id, agency_id,
                 is_verified, is_active, created_at, updated_at
             FROM users
-            WHERE email = ${params.email}
+            WHERE email = ${email}
         `;
 
         if (!row) {
