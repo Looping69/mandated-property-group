@@ -16,6 +16,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const isActive = (path: string) => location.pathname === path;
 
+  // Hide footer on dashboard routes
+  const isDashboard = ['/dashboard', '/admin', '/maintenance-dashboard', '/tour-creator'].some(
+    path => location.pathname.startsWith(path)
+  );
+
   const NavLink = ({ to, label }: { to: string; label: string }) => (
     <Link
       to={to}
@@ -134,83 +139,85 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         {children}
       </main >
 
-      {/* Footer */}
-      < footer className="bg-brand-purpleDark text-white pt-16 pb-8" >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-            <div className="col-span-1 md:col-span-1">
-              <div className="flex items-center gap-2 mb-6">
-                <div className="w-8 h-8 bg-brand-green rounded flex items-center justify-center">
-                  <Home className="text-white" size={18} />
+      {/* Footer - hidden on dashboard routes */}
+      {!isDashboard && (
+        <footer className="bg-brand-purpleDark text-white pt-16 pb-8">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+              <div className="col-span-1 md:col-span-1">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-8 h-8 bg-brand-green rounded flex items-center justify-center">
+                    <Home className="text-white" size={18} />
+                  </div>
+                  <h3 className="font-serif text-xl font-bold text-white">Show House Property</h3>
                 </div>
-                <h3 className="font-serif text-xl font-bold text-white">Show House Property</h3>
+                <p className="text-slate-300 text-sm leading-relaxed mb-6">
+                  South Africa's easiest Real Estate Platform to find your perfect property. Connect with top agents, conveyancers, and maintenance contractors.
+                </p>
+                <div className="flex space-x-4">
+                  <div className="w-8 h-8 rounded-full bg-brand-purple hover:bg-brand-green transition-colors cursor-pointer flex items-center justify-center">
+                    <span className="font-bold text-xs">f</span>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-brand-purple hover:bg-brand-green transition-colors cursor-pointer flex items-center justify-center">
+                    <span className="font-bold text-xs">in</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed mb-6">
-                South Africa's easiest Real Estate Platform to find your perfect property. Connect with top agents, conveyancers, and maintenance contractors.
-              </p>
-              <div className="flex space-x-4">
-                <div className="w-8 h-8 rounded-full bg-brand-purple hover:bg-brand-green transition-colors cursor-pointer flex items-center justify-center">
-                  <span className="font-bold text-xs">f</span>
-                </div>
-                <div className="w-8 h-8 rounded-full bg-brand-purple hover:bg-brand-green transition-colors cursor-pointer flex items-center justify-center">
-                  <span className="font-bold text-xs">in</span>
-                </div>
+
+              <div>
+                <h4 className="font-bold text-white mb-6">Quick Links</h4>
+                <ul className="space-y-3 text-sm text-slate-300">
+                  <li className="hover:text-brand-green cursor-pointer">Contact Us</li>
+                  <li className="hover:text-brand-green cursor-pointer">About Us</li>
+                  <li><Link to="/conveyancing" className="hover:text-brand-green">Find Your Conveyancer</Link></li>
+                  <li className="hover:text-brand-green cursor-pointer">Calculators</li>
+                  <li><Link to="/maintenance" className="hover:text-brand-green">Maintenance Services</Link></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-white mb-6">Our Services</h4>
+                <ul className="space-y-3 text-sm text-slate-300">
+                  <li><Link to="/services/show-property" className="hover:text-brand-green">On Show Property</Link></li>
+                  <li><Link to="/services/top-area-agent" className="hover:text-brand-green">Top Area Agent</Link></li>
+                  <li><Link to="/services/maintenance" className="hover:text-brand-green">Maintenance Contractors</Link></li>
+                  <li><Link to="/services/conveyancing" className="hover:text-brand-green">Conveyancing Services</Link></li>
+                  <li><Link to="/services/partner-portal" className="hover:text-brand-green">Partner Portal</Link></li>
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-white mb-6">Get In Touch</h4>
+                <ul className="space-y-4 text-sm text-slate-300">
+                  <li className="flex items-start">
+                    <span className="text-brand-green mr-3">📞</span>
+                    +27 11 555 0123
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-brand-green mr-3">✉️</span>
+                    info@showhouseproperty.co.za
+                  </li>
+                  <li className="mt-4">
+                    <p className="text-xs text-slate-400 uppercase font-bold mb-2">Business Hours</p>
+                    <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
+                    <p>Saturday: 9:00 AM - 4:00 PM</p>
+                    <p>Sunday: 10:00 AM - 2:00 PM</p>
+                  </li>
+                </ul>
               </div>
             </div>
 
-            <div>
-              <h4 className="font-bold text-white mb-6">Quick Links</h4>
-              <ul className="space-y-3 text-sm text-slate-300">
-                <li className="hover:text-brand-green cursor-pointer">Contact Us</li>
-                <li className="hover:text-brand-green cursor-pointer">About Us</li>
-                <li><Link to="/conveyancing" className="hover:text-brand-green">Find Your Conveyancer</Link></li>
-                <li className="hover:text-brand-green cursor-pointer">Calculators</li>
-                <li><Link to="/maintenance" className="hover:text-brand-green">Maintenance Services</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-white mb-6">Our Services</h4>
-              <ul className="space-y-3 text-sm text-slate-300">
-                <li><Link to="/services/show-property" className="hover:text-brand-green">On Show Property</Link></li>
-                <li><Link to="/services/top-area-agent" className="hover:text-brand-green">Top Area Agent</Link></li>
-                <li><Link to="/services/maintenance" className="hover:text-brand-green">Maintenance Contractors</Link></li>
-                <li><Link to="/services/conveyancing" className="hover:text-brand-green">Conveyancing Services</Link></li>
-                <li><Link to="/services/partner-portal" className="hover:text-brand-green">Partner Portal</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="font-bold text-white mb-6">Get In Touch</h4>
-              <ul className="space-y-4 text-sm text-slate-300">
-                <li className="flex items-start">
-                  <span className="text-brand-green mr-3">📞</span>
-                  +27 11 555 0123
-                </li>
-                <li className="flex items-start">
-                  <span className="text-brand-green mr-3">✉️</span>
-                  info@showhouseproperty.co.za
-                </li>
-                <li className="mt-4">
-                  <p className="text-xs text-slate-400 uppercase font-bold mb-2">Business Hours</p>
-                  <p>Monday - Friday: 8:00 AM - 6:00 PM</p>
-                  <p>Saturday: 9:00 AM - 4:00 PM</p>
-                  <p>Sunday: 10:00 AM - 2:00 PM</p>
-                </li>
-              </ul>
+            <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400">
+              <p>© {new Date().getFullYear()} Show House Property. All rights reserved.</p>
+              <div className="flex space-x-6 mt-4 md:mt-0">
+                <Link to="/privacy" className="hover:text-white">Privacy Policy</Link>
+                <Link to="/terms" className="hover:text-white">Terms of Service</Link>
+                <Link to="/popia" className="hover:text-white">POPIA Act Compliance</Link>
+              </div>
             </div>
           </div>
-
-          <div className="border-t border-slate-700 pt-8 flex flex-col md:flex-row justify-between items-center text-xs text-slate-400">
-            <p>© {new Date().getFullYear()} Show House Property. All rights reserved.</p>
-            <div className="flex space-x-6 mt-4 md:mt-0">
-              <Link to="/privacy" className="hover:text-white">Privacy Policy</Link>
-              <Link to="/terms" className="hover:text-white">Terms of Service</Link>
-              <Link to="/popia" className="hover:text-white">POPIA Act Compliance</Link>
-            </div>
-          </div>
-        </div>
-      </footer >
+        </footer>
+      )}
     </div >
   );
 };
