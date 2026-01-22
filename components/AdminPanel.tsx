@@ -162,7 +162,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
       email: newContractor.email || '',
       description: newContractor.description || '',
       isVerified: true,
-      hourlyRate: Number(newContractor.hourlyRate) || 0
+      hourlyRate: Number(newContractor.hourlyRate) || 0,
+      status: 'active'
     });
     setIsAddingContractor(false);
     setNewContractor({ name: '', trade: '', location: '', email: '', phone: '', image: 'https://picsum.photos/300/200', description: '', hourlyRate: 0, isVerified: true });

@@ -3,12 +3,25 @@ import { Contractor } from '../types';
 
 // Extended contractor params for registration
 export interface ExtendedContractor extends Contractor {
-    status?: string;
+    status: 'active' | 'suspended';
 }
 
-// ... existing CreateContractorParams ...
+export interface CreateContractorParams {
+    name: string;
+    trade: string;
+    location: string;
+    phone?: string;
+    email?: string;
+    description?: string;
+    image?: string;
+    rating?: number;
+    hourlyRate?: number;
+    isVerified?: boolean;
+}
 
-// ... existing ContractorsListResponse ...
+interface ContractorsListResponse {
+    contractors: Contractor[];
+}
 
 export const contractorService = {
     // List all contractors

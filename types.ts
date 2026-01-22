@@ -22,7 +22,7 @@ export interface Agent {
 export interface Agency {
   id: string;
   name: string;
-  email: string;
+  email?: string;
   phone?: string;
   officeAddress?: string;
   website?: string;

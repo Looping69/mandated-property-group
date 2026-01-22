@@ -10,6 +10,7 @@ import { Card, Badge, Input } from './admin/Shared';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { Listing, Agent, VirtualTour, Inquiry, ListingStatus } from '../types';
+import { Subscription } from '../services/subscriptionService';
 import { useToast } from '../contexts/ToastContext';
 
 interface AgentDashboardProps {
@@ -248,7 +249,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
                                     return;
                                 }
                                 if (!isTopAgent) {
-                                    showToast("Virtual tours are exclusively for Top Agents. Please upgrade your plan to unlock this feature.", "warning");
+                                    showToast("Virtual tours are exclusively for Top Agents. Please upgrade your plan to unlock this feature.", "info");
                                     return;
                                 }
                                 onNavigateToTourCreator();

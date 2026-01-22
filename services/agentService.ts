@@ -9,7 +9,7 @@ export interface ExtendedAgent extends Agent {
     agency?: string;
     agencyId?: string;
     isVerified?: boolean;
-    status?: string;
+    status: 'active' | 'suspended';
 }
 
 export interface CreateAgentParams {
