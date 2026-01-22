@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { Agent, Listing, Inquiry, Review, VirtualTour, Contractor, Conveyancer, TourStop, MaintenanceRequest } from '../types';
+import { Agency, Agent, Listing, Inquiry, Review, VirtualTour, Contractor, Conveyancer, TourStop, MaintenanceRequest } from '../types';
 import { propertyService } from '../services/propertyService';
 import { agentService } from '../services/agentService';
 import { inquiryService } from '../services/inquiryService';
@@ -11,6 +11,7 @@ import { conveyancerService } from '../services/conveyancerService';
 import { tourService } from '../services/tourService';
 import { agencyService } from '../services/agencyService';
 import { maintenanceService } from '../services/maintenanceService';
+import { subscriptionService, Subscription } from '../services/subscriptionService';
 
 
 
@@ -25,8 +26,10 @@ interface DataContextType {
   contractors: Contractor[];
   conveyancers: Conveyancer[];
   maintenanceRequests: MaintenanceRequest[];
+  currentSubscription: Subscription | null;
   isLoading: boolean;
   error: string | null;
+  addAgency: (agency: Omit<Agency, 'id' | 'isVerified' | 'createdAt'>) => Promise<Agency>;
   addListing: (listing: Listing | Omit<Listing, 'id'>) => Promise<void>;
   updateListing: (id: string, updates: Partial<Listing>) => Promise<void>;
   deleteListing: (id: string) => Promise<void>;
@@ -66,6 +69,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [contractors, setContractors] = useState<Contractor[]>([]);
   const [conveyancers, setConveyancers] = useState<Conveyancer[]>([]);
   const [maintenanceRequests, setMaintenanceRequests] = useState<MaintenanceRequest[]>([]);
+  const [currentSubscription, setCurrentSubscription] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -96,6 +100,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ]);
       }
 
+      const subscription = isSignedIn ? await subscriptionService.getMySubscription() : null;
+
       setListings(listings);
       setMyListings(myListings);
       setAgents(agents);
@@ -105,6 +111,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setConveyancers(conveyancers);
       setVirtualTours(tours);
       setMaintenanceRequests(maintenance);
+      setCurrentSubscription(subscription);
       setError(null);
     } catch (err) {
       console.error('Failed to fetch data:', err);
@@ -186,7 +193,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const token = await getToken();
       await agentService.updateStatus(id, status, token || undefined);
-      setAgents(prev => prev.map(a => a.id === id ? { ...a, status } : a));
+      setAgents(prev => prev.map(a => a.id === id ? { ...a, status: status as 'active' | 'suspended' } : a));
     } catch (err) {
       console.error("Failed to update agent status:", err);
       throw err;
@@ -277,7 +284,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const token = await getToken();
       await contractorService.updateStatus(id, status, token || undefined);
-      setContractors(prev => prev.map(c => c.id === id ? { ...c, status } : c));
+      setContractors(prev => prev.map(c => c.id === id ? { ...c, status: status as 'active' | 'suspended' } : c));
     } catch (err) {
       console.error('Failed to update contractor status:', err);
       throw err;
@@ -291,6 +298,18 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setAgencies(prev => prev.map(a => a.id === id ? { ...a, status: status as 'active' | 'suspended' } : a));
     } catch (err) {
       console.error('Failed to update agency status:', err);
+      throw err;
+    }
+  };
+
+  const addAgency = async (data: Omit<Agency, 'id' | 'isVerified' | 'createdAt'>) => {
+    try {
+      const token = await getToken();
+      const newAgency = await agencyService.create(data, token || undefined);
+      setAgencies(prev => [...prev, newAgency]);
+      return newAgency;
+    } catch (err) {
+      console.error('Failed to add agency:', err);
       throw err;
     }
   };
@@ -376,6 +395,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       addConveyancer, deleteConveyancer,
       addMaintenanceRequest, updateMaintenanceRequest, deleteMaintenanceRequest,
       addAgency,
+      currentSubscription,
       refreshData: fetchData
     }}>
       {children}

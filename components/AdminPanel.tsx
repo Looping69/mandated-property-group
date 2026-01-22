@@ -54,7 +54,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     deleteConveyancer,
     deleteTour,
     updateAgencyStatus,
-    updateInquiryStatus
+    updateInquiryStatus,
+    currentSubscription
   } = useData();
 
   // Navigation State
@@ -257,6 +258,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   setIsAddingListing={setIsAddingListing}
                   setIsAddingAgent={setIsAddingAgent}
                   setPreviewTour={setPreviewTour}
+                  currentSubscription={currentSubscription}
                 />
               )}
               {activeView === 'LISTINGS' && (

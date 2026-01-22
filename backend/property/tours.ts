@@ -101,6 +101,30 @@ export const createTour = api(
     { expose: true, method: "POST", path: "/api/tours" },
     async (params: CreateTourParams): Promise<VirtualTour> => {
         try {
+            // Check if agent has "Top Agent" status via active subscription
+            const topAgentCheck = await db.queryRow`
+                SELECT p.top_agents as "topAgents"
+                FROM users u
+                JOIN subscriptions s ON u.id = s.user_id
+                JOIN packages p ON s.package_id = p.id
+                WHERE u.agent_id = ${params.agentId} 
+                  AND s.status = 'active'
+                  AND s.current_period_end > NOW()
+                  AND p.top_agents > 0
+            `;
+
+            if (!topAgentCheck || topAgentCheck.topAgents === 0) {
+                throw APIError.permissionDenied("Creating virtual tours is a feature reserved for Top Agents. Please upgrade your plan.");
+            }
+
+            // Check if agent has any listings
+            const listingCount = await db.queryRow`
+                SELECT COUNT(*) as count FROM listings WHERE agent_id = ${params.agentId}
+            `;
+            if (!listingCount || listingCount.count === 0) {
+                throw APIError.failedPrecondition("You must have at least one active listing to create a virtual tour.");
+            }
+
             const id = `vt${Math.random().toString(36).substring(2, 9)}`;
             const date = new Date().toISOString();
             const listingId = params.listingId || null;

@@ -6,6 +6,9 @@ import {
 import { Badge, Card, StatCard } from './Shared';
 import { Button } from '../ui/button';
 import { Listing, Agent, Inquiry, VirtualTour, Contractor, Conveyancer, UserRole, AdminView } from '../../types';
+import { Subscription } from '../../services/subscriptionService';
+import { useToast } from '../../contexts/ToastContext';
+import { cn } from '../../lib/utils';
 
 interface OverviewDashboardProps {
     userRole: UserRole;
@@ -19,6 +22,7 @@ interface OverviewDashboardProps {
     setIsAddingListing: (adding: boolean) => void;
     setIsAddingAgent: (adding: boolean) => void;
     setPreviewTour: (tour: VirtualTour | null) => void;
+    currentSubscription: Subscription | null;
 }
 
 export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
@@ -32,8 +36,11 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
     setActiveView,
     setIsAddingListing,
     setIsAddingAgent,
-    setPreviewTour
+    setPreviewTour,
+    currentSubscription
 }) => {
+    const { showToast } = useToast();
+    const isTopAgent = currentSubscription?.status === 'active' && (currentSubscription?.package?.topAgents || 0) > 0;
     const totalValue = listings.reduce((acc, curr) => acc + curr.price, 0);
     const featuredListings = listings.filter(l => l.isFeatured);
     const newInquiries = inquiries.filter(i => i.status === 'new');
@@ -203,13 +210,23 @@ export const OverviewDashboard: React.FC<OverviewDashboardProps> = ({
                                 <span className="text-sm font-medium text-slate-700">Add New Listing</span>
                             </button>
                             <button
-                                onClick={() => setActiveView('VIRTUAL_TOURS')}
-                                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors text-left group"
+                                onClick={() => {
+                                    if (listings.length === 0) {
+                                        showToast("You must have at least one listing to create a virtual tour.", "error");
+                                        return;
+                                    }
+                                    if (!isTopAgent) {
+                                        showToast("Virtual tours are reserved for Top Agents. Please upgrade your plan.", "warning");
+                                        return;
+                                    }
+                                    setActiveView('VIRTUAL_TOURS');
+                                }}
+                                className={cn("w-full flex items-center gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors text-left group", (!isTopAgent || listings.length === 0) && "opacity-50 cursor-not-allowed")}
                             >
                                 <div className="w-8 h-8 bg-brand-purple/10 rounded-lg flex items-center justify-center group-hover:bg-brand-purple/20 transition-colors">
                                     <Video size={14} className="text-brand-purple" />
                                 </div>
-                                <span className="text-sm font-medium text-slate-700">Create Virtual Tour</span>
+                                <span className="text-sm font-medium text-slate-700">{!isTopAgent ? 'Unlock Virtual Tours' : 'Create Virtual Tour'}</span>
                             </button>
                             <button
                                 onClick={() => setActiveView('LEADS')}

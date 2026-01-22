@@ -1,25 +1,7 @@
 import { apiRequest } from './apiConfig';
+import { Agency } from '../types';
 
 // --- Types ---
-
-export interface Agency {
-    id: string;
-    name: string;
-    registrationNumber?: string;
-    principalName?: string;
-    officeAddress?: string;
-    website?: string;
-    phone?: string;
-    email?: string;
-    description?: string;
-    logoUrl?: string;
-    serviceAreas?: string;
-    teamSize?: string;
-    isFranchise: boolean;
-    isVerified: boolean;
-    createdAt: string;
-    status?: string;
-}
 
 export interface CreateAgencyParams {
     name: string;

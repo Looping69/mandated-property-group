@@ -10,12 +10,14 @@ import { Card, Badge, Input } from './admin/Shared';
 import { Button } from './ui/button';
 import { cn } from '../lib/utils';
 import { Listing, Agent, VirtualTour, Inquiry, ListingStatus } from '../types';
+import { useToast } from '../contexts/ToastContext';
 
 interface AgentDashboardProps {
     currentAgent: Agent;
     listings: Listing[];
     virtualTours: VirtualTour[];
     inquiries: Inquiry[];
+    currentSubscription: Subscription | null;
     addListing: (listing: any) => Promise<void>;
     updateListing: (id: string, updates: Partial<Listing>) => Promise<void>;
     deleteListing: (id: string) => Promise<void>;
@@ -28,12 +30,15 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
     listings,
     virtualTours,
     inquiries,
+    currentSubscription,
     addListing,
     updateListing,
     deleteListing,
     handleAIDescription,
     onNavigateToTourCreator
 }) => {
+    const { showToast } = useToast();
+    const isTopAgent = currentSubscription?.status === 'active' && (currentSubscription?.package?.topAgents || 0) > 0;
     const [isCreatingListing, setIsCreatingListing] = useState(false);
     const [editingListing, setEditingListing] = useState<Listing | null>(null);
     const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
@@ -119,18 +124,59 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
         <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
             <div className="max-w-7xl mx-auto space-y-6">
                 {/* Welcome Header */}
-                <div className="bg-gradient-to-r from-brand-purple to-brand-green rounded-2xl p-8 text-white">
-                    <div className="flex items-center gap-4 mb-4">
-                        <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-white/30">
-                            <img src={currentAgent.image} alt={currentAgent.name} className="w-full h-full object-cover" />
-                        </div>
-                        <div>
-                            <h1 className="text-3xl font-bold">Welcome back, {currentAgent.name}</h1>
-                            <p className="text-white/80">{currentAgent.title}</p>
-                            <div className="flex items-center gap-4 mt-2 text-sm">
-                                <span className="flex items-center gap-1"><Phone size={14} /> {currentAgent.phone}</span>
-                                <span className="flex items-center gap-1"><Mail size={14} /> {currentAgent.email}</span>
+                <div className="relative overflow-hidden bg-gradient-to-br from-brand-purple via-brand-purple/90 to-brand-green rounded-3xl p-8 text-white shadow-2xl">
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-32 -mt-32" />
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-brand-green/20 rounded-full blur-3xl -ml-24 -mb-24" />
+
+                    <div className="relative flex flex-col md:flex-row items-center md:items-start gap-8">
+                        {/* Avatar Section */}
+                        <div className="relative flex-shrink-0">
+                            <div className="w-28 h-28 rounded-2xl overflow-hidden border-4 border-white/20 shadow-2xl rotate-3 hover:rotate-0 transition-transform duration-500 bg-white/10 backdrop-blur-md">
+                                {currentAgent.image ? (
+                                    <img
+                                        src={currentAgent.image}
+                                        alt={currentAgent.name}
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentAgent.name)}&background=random`;
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center bg-brand-purple/20">
+                                        <Users size={40} className="text-white/50" />
+                                    </div>
+                                )}
                             </div>
+                            <div className="absolute -bottom-2 -right-2 bg-brand-green text-white p-2 rounded-lg shadow-lg">
+                                <Sparkles size={16} />
+                            </div>
+                        </div>
+
+                        {/* Content Section */}
+                        <div className="flex-1 text-center md:text-left">
+                            <h4 className="text-white/70 text-sm font-bold uppercase tracking-[0.2em] mb-1">Agent Portal</h4>
+                            <h1 className="text-4xl md:text-5xl font-serif font-bold mb-2 tracking-tight">
+                                Welcome back, <span className="text-white">{currentAgent.name.split(' ')[0]}</span>
+                            </h1>
+                            <p className="text-xl text-white/80 font-medium mb-6">{currentAgent.title}</p>
+
+                            <div className="flex flex-wrap items-center justify-center md:justify-start gap-6 text-sm">
+                                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 whitespace-nowrap">
+                                    <Phone size={14} className="text-brand-green" />
+                                    <span className="font-bold">{currentAgent.phone}</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10 whitespace-nowrap">
+                                    <Mail size={14} className="text-brand-green" />
+                                    <span className="font-bold">{currentAgent.email}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Quick Stats Badge */}
+                        <div className="hidden lg:flex flex-col items-center justify-center bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/10 shadow-xl">
+                            <div className="text-3xl font-bold">{stats.totalListings}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest opacity-60">Total Listings</div>
                         </div>
                     </div>
                 </div>
@@ -196,10 +242,21 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
                         </Button>
                         <Button
                             variant="outline"
-                            onClick={onNavigateToTourCreator}
-                            className="flex-1"
+                            onClick={() => {
+                                if (myListings.length === 0) {
+                                    showToast("You must have at least one listing to create a virtual tour.", "error");
+                                    return;
+                                }
+                                if (!isTopAgent) {
+                                    showToast("Virtual tours are exclusively for Top Agents. Please upgrade your plan to unlock this feature.", "warning");
+                                    return;
+                                }
+                                onNavigateToTourCreator();
+                            }}
+                            className={cn("flex-1", (!isTopAgent || myListings.length === 0) && "opacity-50 cursor-not-allowed")}
                         >
-                            <Video size={16} className="mr-2" /> Create Virtual Tour
+                            <Video size={16} className="mr-2" />
+                            {!isTopAgent ? 'Unlock Virtual Tours' : 'Create Virtual Tour'}
                         </Button>
                     </div>
                 </Card>
