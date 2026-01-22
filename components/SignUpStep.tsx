@@ -320,6 +320,43 @@ export const SignUpStep: React.FC<SignUpStepProps> = ({
                 </div>
             </form>
 
+            {/* Pricing Hint */}
+            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 mt-6">
+                <p className="text-xs font-bold text-slate-400 uppercase mb-3 tracking-wider">Suggested for {getRoleLabel()}s</p>
+                {role === 'AGENT' && (
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-bold text-slate-900">Solo Entry</p>
+                            <p className="text-xs text-slate-500">R80 once-off per listing</p>
+                        </div>
+                        <CheckCircle size={16} className="text-brand-green" />
+                    </div>
+                )}
+                {role === 'AGENCY' && (
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-bold text-slate-900">Local Presence</p>
+                            <p className="text-xs text-slate-500">R300/mo • 6 listings • 1 Top Agent</p>
+                        </div>
+                        <CheckCircle size={16} className="text-brand-green" />
+                    </div>
+                )}
+                {role === 'CONTRACTOR' && (
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <p className="text-sm font-bold text-slate-900">Standard Partner</p>
+                            <p className="text-xs text-slate-500">Free sign up • Only pay for leads</p>
+                        </div>
+                        <CheckCircle size={16} className="text-brand-green" />
+                    </div>
+                )}
+                <div className="mt-4 pt-3 border-t border-slate-200">
+                    <a href="/pricing" target="_blank" className="text-xs text-brand-green font-bold hover:underline flex items-center gap-1">
+                        View all plans and details <ArrowRight size={12} />
+                    </a>
+                </div>
+            </div>
+
             {/* Terms */}
             <p className="text-xs text-center text-slate-400 pt-2">
                 By creating an account, you agree to our{' '}

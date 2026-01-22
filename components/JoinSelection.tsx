@@ -61,6 +61,35 @@ export const JoinSelection: React.FC<JoinSelectionProps> = ({ onSelectType, onCa
                     />
                 </div>
 
+                <div className="bg-white/50 backdrop-blur-sm rounded-3xl p-8 border border-slate-100 shadow-sm mb-12">
+                    <div className="text-center mb-8">
+                        <h2 className="text-2xl font-bold text-slate-900">Partner Pricing at a Glance</h2>
+                        <p className="text-slate-500">Transparent plans designed for your growth</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
+                            <h4 className="font-bold text-slate-900 mb-1">Contractors</h4>
+                            <p className="text-brand-green font-bold text-xl mb-1">Free to Join</p>
+                            <p className="text-xs text-slate-400">Pay only when you win a lead</p>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
+                            <h4 className="font-bold text-slate-900 mb-1">Individual Agents</h4>
+                            <p className="text-slate-900 font-bold text-xl mb-1">Starting at R80</p>
+                            <p className="text-xs text-slate-400">Pay-per-listing or Monthly Top Agent</p>
+                        </div>
+                        <div className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm">
+                            <h4 className="font-bold text-slate-900 mb-1">Real Estate Agencies</h4>
+                            <p className="text-slate-900 font-bold text-xl mb-1">Starting at R300/mo</p>
+                            <p className="text-xs text-slate-400">Team management & bulk visibility</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-8 text-center text-sm text-slate-400">
+                        Detailed plans available during the registration process.
+                    </div>
+                </div>
+
                 <div className="text-center">
                     <Button variant="ghost" onClick={onCancel} className="text-slate-400 hover:text-slate-600">
                         Cancel and Return Home
