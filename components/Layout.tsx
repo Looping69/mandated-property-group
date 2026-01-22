@@ -67,15 +67,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center space-x-3">
               <SignedIn>
-                {user?.role === 'ADMIN' && (
-                  <Link
-                    to="/admin"
-                    className="flex items-center text-xs text-brand-green font-bold px-3 py-2 border border-brand-green/20 bg-brand-green/5 rounded-md uppercase tracking-wider mr-2"
-                  >
-                    <Lock size={12} className="mr-2" />
-                    Admin
-                  </Link>
-                )}
                 <Link
                   to={getDashboardUrl()}
                   className="flex items-center text-xs text-brand-green font-bold px-3 py-2 border border-brand-green/20 bg-brand-green/5 rounded-md uppercase tracking-wider mr-2"
@@ -118,7 +109,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <NavLink to="/maintenance" label="Maintenance" />
                 <SignedIn>
                   <NavLink to="/tour-creator" label="AI Tour Studio" />
-                  {user?.role === 'ADMIN' && <NavLink to="/admin" label="Admin Panel" />}
                   <NavLink to={getDashboardUrl()} label="Dashboard" />
                   <div className="flex items-center gap-2 py-2">
                     <UserButton /> <span className="text-sm font-bold text-slate-600">My Account</span>

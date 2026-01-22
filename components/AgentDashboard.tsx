@@ -44,10 +44,20 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
     const [editingListing, setEditingListing] = useState<Listing | null>(null);
     const [isGeneratingDesc, setIsGeneratingDesc] = useState(false);
     const [newListing, setNewListing] = useState<Partial<Listing>>({
-        agentId: currentAgent.id,
+        agentId: currentAgent?.id || '',
         status: 'active',
         isFeatured: false
     });
+
+    if (!currentAgent) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] p-8 text-center">
+                <div className="w-12 h-12 border-4 border-brand-green/20 border-t-brand-green rounded-full animate-spin mb-4" />
+                <h3 className="text-xl font-bold text-slate-900 mb-2">Loading Profile</h3>
+                <p className="text-slate-500">Please wait while we fetch your agent information...</p>
+            </div>
+        );
+    }
 
     // Filter to show only this agent's listings
     const myListings = listings.filter(l => l.agentId === currentAgent.id);
