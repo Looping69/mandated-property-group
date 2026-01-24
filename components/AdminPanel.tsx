@@ -82,6 +82,11 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     description: '',
     isFeatured: false,
     status: 'active',
+    propertyType: 'House',
+    viewingType: 'appointment',
+    pool: 'none',
+    garage: 'None',
+    isPetFriendly: false,
     agentId: currentAgentId || (agents[0]?.id || '')
   });
 
@@ -139,7 +144,10 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     setNewListing({
       title: '', price: 0, address: '', beds: 0, baths: 0,
       image: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80',
-      description: '', isFeatured: false, status: 'active', agentId: currentAgentId || (agents[0]?.id || '')
+      description: '', isFeatured: false, status: 'active',
+      propertyType: 'House', viewingType: 'appointment',
+      pool: 'none', garage: 'None', isPetFriendly: false,
+      agentId: currentAgentId || (agents[0]?.id || '')
     });
   };
 
