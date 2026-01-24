@@ -1,9 +1,9 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import { Plus, XCircle, Camera, Trash2, TrendingUp } from 'lucide-react';
 import { Card, Badge, Input } from './Shared';
 import { Button } from '../ui/button';
 import { Agent } from '../../types';
+import { cn } from '../../lib/utils';
 
 interface AgentsManagerProps {
     agents: Agent[];

@@ -58,9 +58,9 @@ export const createAgent = api(
         const id = `a_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
         await db.exec`
             INSERT INTO agents (id, name, email, phone, status)
-            VALUES (${id}, ${params.name}, ${params.email}, ${params.phone}, 'active')
+            VALUES (${id}, ${params.name}, ${params.email}, ${params.phone}, 'pending')
         `;
-        return { ...params, id, status: 'active' };
+        return { ...params, id, status: 'pending' };
     }
 );
 
@@ -72,11 +72,19 @@ export const deleteAgent = api(
     }
 );
 
-// Suspend/Activate agent
+// Suspend/Activate/Approve agent
 export const updateAgentStatus = api(
     { expose: true, auth: true, method: "PUT", path: "/api/agents/:id/status" },
     async ({ id, status }: { id: string; status: string }): Promise<SuccessResponse> => {
         await db.exec`UPDATE agents SET status = ${status} WHERE id = ${id}`;
+
+        // If agent is being activated/approved, also verify the associated user
+        if (status === 'active') {
+            await db.exec`UPDATE users SET is_verified = true WHERE agent_id = ${id}`;
+        } else if (status === 'suspended') {
+            await db.exec`UPDATE users SET is_verified = false WHERE agent_id = ${id}`;
+        }
+
         return { success: true };
     }
 );

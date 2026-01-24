@@ -16,7 +16,7 @@ export interface Agent {
   email: string;
   sales: string;
   reviews: Review[];
-  status: 'active' | 'suspended';
+  status: 'active' | 'suspended' | 'pending';
 }
 
 export interface Agency {
@@ -208,4 +208,4 @@ export interface User {
   updatedAt: string;
 }
 
-export type AdminView = 'OVERVIEW' | 'LISTINGS' | 'AGENTS' | 'AGENCIES' | 'LEADS' | 'VIRTUAL_TOURS' | 'MAINTENANCE' | 'CONVEYANCERS' | 'SETTINGS';
+export type AdminView = 'OVERVIEW' | 'LISTINGS' | 'AGENTS' | 'AGENCIES' | 'LEADS' | 'VIRTUAL_TOURS' | 'MAINTENANCE' | 'CONVEYANCERS' | 'SETTINGS' | 'AGENT_APPROVAL';

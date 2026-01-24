@@ -80,7 +80,7 @@ export const JoinPage: React.FC = () => {
             if (user) {
                 await userService.update(user.id, {
                     agentId: newAgent.id,
-                    isVerified: true,
+                    isVerified: false,
                 });
             }
 

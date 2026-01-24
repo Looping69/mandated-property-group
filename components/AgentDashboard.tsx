@@ -64,6 +64,41 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
         );
     }
 
+    if (currentAgent.status === 'pending') {
+        return (
+            <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+                <Card className="max-w-md w-full p-8 text-center space-y-6">
+                    <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center mx-auto">
+                        <Calendar size={40} className="text-amber-600" />
+                    </div>
+                    <div className="space-y-2">
+                        <h2 className="text-2xl font-bold text-slate-900">Approval Pending</h2>
+                        <p className="text-slate-500">
+                            Your agent account is currently being reviewed by our admin team.
+                            You'll receive full access once your profile has been verified.
+                        </p>
+                    </div>
+                    <div className="bg-slate-50 p-4 rounded-lg text-sm text-left space-y-2">
+                        <p className="font-bold text-slate-700">What happens next?</p>
+                        <ul className="list-disc pl-4 text-slate-600 space-y-1">
+                            <li>We'll verify your FFC/PPRA number</li>
+                            <li>Your profile photos will be reviewed</li>
+                            <li>You'll get an email once approved</li>
+                        </ul>
+                    </div>
+                    <div className="pt-4 flex flex-col gap-3">
+                        <Button variant="brand" className="w-full" onClick={() => window.location.reload()}>
+                            Refresh Status
+                        </Button>
+                        <Button variant="outline" className="w-full" onClick={() => window.location.href = '/'}>
+                            Back to Home
+                        </Button>
+                    </div>
+                </Card>
+            </div>
+        );
+    }
+
     // Filter to show only this agent's listings
     const myListings = listings.filter(l => l.agentId === currentAgent.id);
     const myInquiries = inquiries.filter(i => i.agentId === currentAgent.id);

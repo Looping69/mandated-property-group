@@ -20,6 +20,7 @@ import { MaintenanceManager } from './admin/MaintenanceManager';
 import { InquiryManager } from './admin/InquiryManager';
 import { VirtualTourManager } from './admin/VirtualTourManager';
 import { SettingsManager } from './admin/SettingsManager';
+import { AgentApprovalManager } from './admin/AgentApprovalManager';
 
 interface AdminPanelProps {
   onLogout: () => void;
@@ -343,6 +344,12 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   inquiries={inquiries}
                   contractors={contractors}
                   conveyancers={conveyancers}
+                />
+              )}
+              {activeView === 'AGENT_APPROVAL' && userRole === 'ADMIN' && (
+                <AgentApprovalManager
+                  agents={agents}
+                  updateAgentStatus={updateAgentStatus}
                 />
               )}
             </div>

@@ -196,7 +196,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const token = await getToken();
       await agentService.updateStatus(id, status, token || undefined);
-      setAgents(prev => prev.map(a => a.id === id ? { ...a, status: status as 'active' | 'suspended' } : a));
+      setAgents(prev => prev.map(a => a.id === id ? { ...a, status: status as 'active' | 'suspended' | 'pending' } : a));
     } catch (err) {
       console.error("Failed to update agent status:", err);
       throw err;

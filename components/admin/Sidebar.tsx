@@ -60,9 +60,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     <SidebarItem view="AGENTS" icon={Users} label="Agents" activeView={activeView} setActiveView={setActiveView} />
                 )}
 
-                {/* Only Admin can manage Agencies */}
+                {/* Only Admin can manage Agencies and Agent Approvals */}
                 {userRole === 'ADMIN' && (
-                    <SidebarItem view="AGENCIES" icon={Building2} label="Agencies" activeView={activeView} setActiveView={setActiveView} />
+                    <>
+                        <SidebarItem view="AGENCIES" icon={Building2} label="Agencies" activeView={activeView} setActiveView={setActiveView} />
+                        <SidebarItem view="AGENT_APPROVAL" icon={Users} label="Agent Approvals" activeView={activeView} setActiveView={setActiveView} />
+                    </>
                 )}
 
                 <SidebarItem view="CONVEYANCERS" icon={Scale} label="Conveyancers" activeView={activeView} setActiveView={setActiveView} />
