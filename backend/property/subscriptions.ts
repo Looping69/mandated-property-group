@@ -1,4 +1,4 @@
-import { api, APIError } from "encore.dev/api";
+import { api, APIError, Header } from "encore.dev/api";
 import { db } from "./property";
 import { secret } from "encore.dev/config";
 
@@ -116,7 +116,7 @@ export const getPackage = api(
 // Create Yoco checkout for a package
 export const createCheckout = api(
     { expose: true, auth: true, method: "POST", path: "/api/subscriptions/checkout" },
-    async (params: { packageId: string; successUrl: string; cancelUrl: string; authorization: string }): Promise<{ checkoutUrl: string; paymentId: string }> => {
+    async (params: { packageId: string; successUrl: string; cancelUrl: string; authorization: Header<"Authorization"> }): Promise<{ checkoutUrl: string; paymentId: string }> => {
         // Get user from session
         const token = params.authorization.replace("Bearer ", "");
         const session = await db.queryRow`
@@ -178,7 +178,7 @@ export const createCheckout = api(
 // Verify payment and activate subscription
 export const verifyPayment = api(
     { expose: true, auth: true, method: "POST", path: "/api/subscriptions/verify" },
-    async (params: { paymentId: string; authorization: string }): Promise<{ success: boolean; subscription?: Subscription }> => {
+    async (params: { paymentId: string; authorization: Header<"Authorization"> }): Promise<{ success: boolean; subscription?: Subscription }> => {
         // Get user from session
         const token = params.authorization.replace("Bearer ", "");
         const session = await db.queryRow`
@@ -282,7 +282,7 @@ export const verifyPayment = api(
 // Get user's active subscription
 export const getMySubscription = api(
     { expose: true, auth: true, method: "GET", path: "/api/subscriptions/me" },
-    async (params: { authorization: string }): Promise<{ subscription?: Subscription & { package?: Package } }> => {
+    async (params: { authorization: Header<"Authorization"> }): Promise<{ subscription?: Subscription & { package?: Package } }> => {
         const token = params.authorization.replace("Bearer ", "");
         const session = await db.queryRow`
             SELECT user_id as "userId" FROM sessions WHERE token = ${token} AND expires_at > NOW()
@@ -324,6 +324,7 @@ export const getMySubscription = api(
                     maxListings: row.maxListings,
                     topAgents: row.topAgents,
                     featuredListings: row.featuredListings,
+                    maxPhotos: 5, // Default for now
                     isActive: true,
                 }
             }

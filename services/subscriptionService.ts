@@ -49,7 +49,7 @@ export const subscriptionService = {
         return apiRequest<{ checkoutUrl: string; paymentId: string }>('/api/subscriptions/checkout', {
             method: 'POST',
             headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-            body: JSON.stringify({ packageId, successUrl, cancelUrl, authorization: token ? `Bearer ${token}` : '' }),
+            body: JSON.stringify({ packageId, successUrl, cancelUrl }),
         });
     },
 
@@ -59,7 +59,7 @@ export const subscriptionService = {
         return apiRequest<{ success: boolean; subscription?: Subscription }>('/api/subscriptions/verify', {
             method: 'POST',
             headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-            body: JSON.stringify({ paymentId, authorization: token ? `Bearer ${token}` : '' }),
+            body: JSON.stringify({ paymentId }),
         });
     },
 
