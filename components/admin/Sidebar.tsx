@@ -9,21 +9,23 @@ interface SidebarProps {
     setActiveView: (view: AdminView) => void;
     userRole: UserRole;
     onLogout: () => void;
+    pendingAgentCount?: number;
 }
 
-const SidebarItem = ({ view, icon: Icon, label, activeView, setActiveView }: {
+const SidebarItem = ({ view, icon: Icon, label, activeView, setActiveView, badgeCount }: {
     view: AdminView,
     icon: any,
     label: string,
     activeView: string,
-    setActiveView: (v: any) => void
+    setActiveView: (v: any) => void,
+    badgeCount?: number
 }) => {
     const isActive = activeView === view;
     return (
         <button
             onClick={() => setActiveView(view)}
             className={cn(
-                "w-full flex items-center px-4 py-3 rounded-xl transition-all duration-300 group",
+                "w-full flex items-center px-4 py-3 rounded-xl transition-all duration-300 group relative",
                 isActive
                     ? "bg-brand-green text-white shadow-lg shadow-brand-green/20"
                     : "text-slate-400 hover:text-white hover:bg-white/5"
@@ -31,7 +33,15 @@ const SidebarItem = ({ view, icon: Icon, label, activeView, setActiveView }: {
         >
             <Icon size={18} className={cn("mr-3 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />
             <span className="font-medium text-sm">{label}</span>
-            {isActive && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
+
+            {/* Notification Badge */}
+            {badgeCount !== undefined && badgeCount > 0 && (
+                <div className="ml-auto bg-red-500 text-white text-[10px] font-bold h-5 min-w-[20px] px-1 rounded-full flex items-center justify-center animate-pulse shadow-md shadow-red-500/20">
+                    {badgeCount > 99 ? '99+' : badgeCount}
+                </div>
+            )}
+
+            {isActive && !badgeCount && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-white animate-pulse" />}
         </button>
     );
 };
@@ -40,7 +50,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     activeView,
     setActiveView,
     userRole,
-    onLogout
+    onLogout,
+    pendingAgentCount = 0
 }) => {
     return (
         <aside className="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col fixed h-full z-20">
@@ -64,7 +75,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {userRole === 'ADMIN' && (
                     <>
                         <SidebarItem view="AGENCIES" icon={Building2} label="Agencies" activeView={activeView} setActiveView={setActiveView} />
-                        <SidebarItem view="AGENT_APPROVAL" icon={Users} label="Agent Approvals" activeView={activeView} setActiveView={setActiveView} />
+                        <SidebarItem
+                            view="AGENT_APPROVAL"
+                            icon={Users}
+                            label="Agent Approvals"
+                            activeView={activeView}
+                            setActiveView={setActiveView}
+                            badgeCount={pendingAgentCount}
+                        />
                         <SidebarItem view="SUBSCRIPTIONS" icon={CreditCard} label="Income & Subs" activeView={activeView} setActiveView={setActiveView} />
                     </>
                 )}

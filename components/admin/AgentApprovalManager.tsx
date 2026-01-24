@@ -45,7 +45,9 @@ export const AgentApprovalManager: React.FC<AgentApprovalManagerProps> = ({
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="flex justify-between items-end">
                 <div>
-                    <h2 className="text-3xl font-serif font-bold text-slate-900">Agent Approvals</h2>
+                    <h2 className="text-3xl font-serif font-bold text-slate-900">
+                        Agent Approvals ({pendingAgents.length})
+                    </h2>
                     <p className="text-slate-500 text-sm">Review and approve new agent registrations.</p>
                 </div>
                 <div className="relative w-72">

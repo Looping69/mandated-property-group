@@ -223,6 +223,8 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
     }
   };
 
+  const pendingAgentCount = agents.filter(a => a.status === 'pending').length;
+
   return (
     <div className="min-h-screen bg-brand-purpleLight font-sans flex">
       <Sidebar
@@ -230,6 +232,7 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
         setActiveView={setActiveView}
         userRole={userRole}
         onLogout={onLogout}
+        pendingAgentCount={pendingAgentCount}
       />
 
       <main className="flex-1 ml-64 p-8">
