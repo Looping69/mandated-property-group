@@ -208,4 +208,4 @@ export interface User {
   updatedAt: string;
 }
 
-export type AdminView = 'OVERVIEW' | 'LISTINGS' | 'AGENTS' | 'AGENCIES' | 'LEADS' | 'VIRTUAL_TOURS' | 'MAINTENANCE' | 'CONVEYANCERS' | 'SETTINGS' | 'AGENT_APPROVAL';
+export type AdminView = 'OVERVIEW' | 'LISTINGS' | 'AGENTS' | 'AGENCIES' | 'LEADS' | 'VIRTUAL_TOURS' | 'MAINTENANCE' | 'CONVEYANCERS' | 'SETTINGS' | 'AGENT_APPROVAL' | 'SUBSCRIPTIONS';

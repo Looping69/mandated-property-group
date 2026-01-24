@@ -331,3 +331,69 @@ export const getMySubscription = api(
         };
     }
 );
+
+// List all subscriptions (Admin only)
+export const listAllSubscriptions = api(
+    { expose: true, auth: true, method: "GET", path: "/api/admin/subscriptions" },
+    async (params: { authorization: Header<"Authorization"> }): Promise<{ subscriptions: any[] }> => {
+        const token = params.authorization.replace("Bearer ", "");
+        const session = await db.queryRow`
+            SELECT u.role FROM sessions s JOIN users u ON s.user_id = u.id 
+            WHERE s.token = ${token} AND s.expires_at > NOW()
+        `;
+        if (!session || session.role !== 'ADMIN') throw APIError.permissionDenied("admin only");
+
+        const subscriptions: any[] = [];
+        const rows = db.query`
+            SELECT s.id, s.user_id as "userId", s.package_id as "packageId", s.status,
+                   s.current_period_start as "currentPeriodStart", s.current_period_end as "currentPeriodEnd",
+                   s.created_at as "createdAt", s.updated_at as "updatedAt",
+                   p.name as "packageName", u.email as "userEmail"
+            FROM subscriptions s
+            JOIN packages p ON s.package_id = p.id
+            JOIN users u ON s.user_id = u.id
+            ORDER BY s.created_at DESC
+        `;
+        for await (const row of rows) {
+            subscriptions.push({
+                ...row,
+                currentPeriodStart: row.currentPeriodStart?.toISOString(),
+                currentPeriodEnd: row.currentPeriodEnd?.toISOString(),
+                createdAt: row.createdAt.toISOString(),
+                updatedAt: row.updatedAt.toISOString(),
+            });
+        }
+        return { subscriptions };
+    }
+);
+
+// List all payments (Admin only)
+export const listAllPayments = api(
+    { expose: true, auth: true, method: "GET", path: "/api/admin/payments" },
+    async (params: { authorization: Header<"Authorization"> }): Promise<{ payments: any[] }> => {
+        const token = params.authorization.replace("Bearer ", "");
+        const session = await db.queryRow`
+            SELECT u.role FROM sessions s JOIN users u ON s.user_id = u.id 
+            WHERE s.token = ${token} AND s.expires_at > NOW()
+        `;
+        if (!session || session.role !== 'ADMIN') throw APIError.permissionDenied("admin only");
+
+        const payments: any[] = [];
+        const rows = db.query`
+            SELECT p.id, p.user_id as "userId", p.subscription_id as "subscriptionId",
+                   p.amount_cents as "amountCents", p.currency, p.status, p.description,
+                   p.created_at as "createdAt", u.email as "userEmail"
+            FROM payments p
+            JOIN users u ON p.user_id = u.id
+            ORDER BY p.created_at DESC
+        `;
+        for await (const row of rows) {
+            payments.push({
+                ...row,
+                createdAt: row.createdAt.toISOString(),
+            });
+        }
+        return { payments };
+    }
+);
+

@@ -72,6 +72,24 @@ export const subscriptionService = {
         return response.subscription || null;
     },
 
+    // List all subscriptions (Admin only)
+    async listAllSubscriptions(): Promise<any[]> {
+        const token = getAuthToken();
+        const response = await apiRequest<{ subscriptions: any[] }>('/api/admin/subscriptions', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        return response.subscriptions || [];
+    },
+
+    // List all payments (Admin only)
+    async listAllPayments(): Promise<any[]> {
+        const token = getAuthToken();
+        const response = await apiRequest<{ payments: any[] }>('/api/admin/payments', {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        return response.payments || [];
+    },
+
     // Format price for display
     formatPrice(priceCents: number): string {
         return `R${(priceCents / 100).toFixed(0)}`;

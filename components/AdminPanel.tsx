@@ -21,6 +21,7 @@ import { InquiryManager } from './admin/InquiryManager';
 import { VirtualTourManager } from './admin/VirtualTourManager';
 import { SettingsManager } from './admin/SettingsManager';
 import { AgentApprovalManager } from './admin/AgentApprovalManager';
+import { SubscriptionManager } from './admin/SubscriptionManager';
 
 interface AdminPanelProps {
   onLogout: () => void;
@@ -351,6 +352,9 @@ export const AdminPanel: React.FC<AdminPanelProps> = ({
                   agents={agents}
                   updateAgentStatus={updateAgentStatus}
                 />
+              )}
+              {activeView === 'SUBSCRIPTIONS' && userRole === 'ADMIN' && (
+                <SubscriptionManager />
               )}
             </div>
           )}
