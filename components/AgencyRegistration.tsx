@@ -23,7 +23,7 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
     onCancel,
     onDashboardRedirect
 }) => {
-    const { isSignedIn } = useUser();
+    const { isSignedIn, user } = useUser();
     const [step, setStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -52,7 +52,7 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
                 if (wasSignedInOnMount) {
                     hasAutoSubmitted.current = true;
                     try {
-                        await onSubmit(formData);
+                        await onSubmit(formData, user);
                         setStep(5);
                     } catch (e) {
                         console.error("Auto submit failed", e);

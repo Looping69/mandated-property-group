@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import {
     Wrench, Upload, CheckCircle, ArrowRight, Phone, Mail,
     MapPin, DollarSign, FileText, Award, Star, Briefcase,
-    Camera, Building
+    Camera, Building, Loader2
 } from 'lucide-react';
 import { Card, Input } from './admin/Shared';
 import { Button } from './ui/button';
@@ -38,7 +38,7 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
     onCancel,
     onDashboardRedirect
 }) => {
-    const { isSignedIn } = useUser();
+    const { isSignedIn, user } = useUser();
     const [step, setStep] = useState<Step>(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
@@ -79,7 +79,12 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
     const handleNextStep = () => {
         if (step === 1 && isStep1Valid()) setStep(2);
         else if (step === 2 && isStep2Valid()) setStep(3);
-        else if (step === 3 && isStep3Valid()) setStep(4);
+        else if (step === 3 && isStep3Valid()) {
+            setStep(4);
+            if (isSignedIn && user) {
+                handleSignUpSuccess(user);
+            }
+        }
     };
 
     const handleBack = () => {
@@ -371,17 +376,25 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
                     {step === 2 && renderStep2()}
                     {step === 3 && renderStep3()}
                     {step === 4 && (
-                        <SignUpStep
-                            role="CONTRACTOR"
-                            registrationData={{
-                                name: formData.name,
-                                phone: formData.phone,
-                                email: formData.email,
-                                image: formData.image,
-                            }}
-                            onSuccess={handleSignUpSuccess}
-                            onBack={() => setStep(3)}
-                        />
+                        isSignedIn ? (
+                            <div className="text-center py-12">
+                                <Loader2 size={40} className="mx-auto mb-4 text-brand-green animate-spin" />
+                                <h3 className="text-xl font-bold mb-4">Processing Registration...</h3>
+                                <p className="text-slate-500">Linking your profile to your professional account.</p>
+                            </div>
+                        ) : (
+                            <SignUpStep
+                                role="CONTRACTOR"
+                                registrationData={{
+                                    name: formData.name,
+                                    phone: formData.phone,
+                                    email: formData.email,
+                                    image: formData.image,
+                                }}
+                                onSuccess={handleSignUpSuccess}
+                                onBack={() => setStep(3)}
+                            />
+                        )
                     )}
                     {step === 5 && renderStep5Success()}
 

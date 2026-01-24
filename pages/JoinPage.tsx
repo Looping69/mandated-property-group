@@ -30,7 +30,7 @@ export const JoinPage: React.FC = () => {
             if (targetUser) {
                 await userService.update(targetUser.id, {
                     contractorId: newContractor.id,
-                    isVerified: true,
+                    isVerified: false,
                 });
             }
 
@@ -59,7 +59,7 @@ export const JoinPage: React.FC = () => {
             if (targetUser && agency) {
                 await userService.update(targetUser.id, {
                     agencyId: agency.id,
-                    isVerified: true,
+                    isVerified: false,
                 });
             }
 
