@@ -536,3 +536,4 @@ async function getUserFromHeader(authorization: string): Promise<AuthData> {
         contractorID: row.contractorID || undefined
     };
 }
+

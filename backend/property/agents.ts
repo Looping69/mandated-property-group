@@ -57,8 +57,8 @@ export const createAgent = api(
     async (params: CreateAgentParams): Promise<Agent> => {
         const id = `a_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
         await db.exec`
-            INSERT INTO agents (id, name, email, phone, status)
-            VALUES (${id}, ${params.name}, ${params.email}, ${params.phone}, 'pending')
+            INSERT INTO agents (id, name, email, phone, title, image, sales, status)
+            VALUES (${id}, ${params.name}, ${params.email}, ${params.phone}, ${params.title || null}, ${params.image || null}, ${params.sales || null}, 'pending')
         `;
         return { ...params, id, status: 'pending' };
     }
