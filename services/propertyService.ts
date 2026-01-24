@@ -32,9 +32,11 @@ export const propertyService = {
                 ...listing,
                 agentId: listing.agentId || 'a1',
                 isFeatured: listing.isFeatured || false,
-                status: listing.status || 'available',
+                status: listing.status || 'active',
                 propertyType: listing.propertyType || 'House',
+                viewingType: listing.viewingType || 'appointment',
                 price: Number(listing.price),
+                onShowDate: listing.onShowDate || undefined,
             }),
         });
     },
