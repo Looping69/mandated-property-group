@@ -4,7 +4,9 @@
   "global_cors": {
     "allow_origins_with_credentials": [
       "https://mandated-property-group.vercel.app",
-      "http://localhost:3000"
+      "http://localhost:3000",
+      "https://www.showhouseproperty.co.za",
+      "https://showhouseproperty.co.za"
     ],
     "allow_methods": [
       "GET",

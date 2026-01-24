@@ -21,7 +21,7 @@ interface AuthState {
 
 interface AuthContextType extends AuthState {
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (params: SignupParams) => Promise<void>;
+  signUp: (params: SignupParams) => Promise<User>;
   signOut: () => Promise<void>;
   refreshUser: () => Promise<void>;
   getToken: () => string | null;
@@ -130,6 +130,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { user, token } = await userService.signup(params);
     saveAuth(user, token);
     setState({ user, isLoaded: true, isSignedIn: true });
+    return user;
   }, []);
 
   // Sign out

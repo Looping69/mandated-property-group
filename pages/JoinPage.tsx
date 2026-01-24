@@ -18,14 +18,17 @@ export const JoinPage: React.FC = () => {
     /**
      * Handle contractor registration completion
      */
-    const handleContractorSubmit = async (data: any) => {
+    const handleContractorSubmit = async (data: any, newUser?: any) => {
         try {
             // Add contractor to the system
             const newContractor = await addContractor(data);
 
+            // Use provided user or current context user
+            const targetUser = newUser || user;
+
             // Link contractor to the user and mark as verified
-            if (user) {
-                await userService.update(user.id, {
+            if (targetUser) {
+                await userService.update(targetUser.id, {
                     contractorId: newContractor.id,
                     isVerified: true,
                 });
@@ -44,16 +47,18 @@ export const JoinPage: React.FC = () => {
     /**
      * Handle agency registration completion
      */
-    const handleAgencySubmit = async (data: any) => {
+    const handleAgencySubmit = async (data: any, newUser?: any) => {
         try {
             // Add agency to the system
-            if (addAgency) {
-                await addAgency(data);
-            }
+            const agency = await addAgency(data);
 
-            // Mark user as verified
-            if (user) {
-                await userService.update(user.id, {
+            // Use the provided user object (from signup) or current user
+            const targetUser = newUser || user;
+
+            // Link agency to the user and mark as verified
+            if (targetUser && agency) {
+                await userService.update(targetUser.id, {
+                    agencyId: agency.id,
                     isVerified: true,
                 });
             }
@@ -71,16 +76,19 @@ export const JoinPage: React.FC = () => {
     /**
      * Handle agent registration completion
      */
-    const handleAgentSubmit = async (data: any) => {
+    const handleAgentSubmit = async (data: any, newUser?: any) => {
         try {
             // Add agent to the system
             const newAgent = await addAgent(data);
 
+            // Use provided user or current context user
+            const targetUser = newUser || user;
+
             // Link agent to the user and mark as verified
-            if (user) {
-                await userService.update(user.id, {
+            if (targetUser) {
+                await userService.update(targetUser.id, {
                     agentId: newAgent.id,
-                    isVerified: false,
+                    isVerified: false, // Agents need manual verification
                 });
             }
 

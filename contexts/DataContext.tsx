@@ -305,10 +305,16 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const addAgency = async (data: Omit<Agency, 'id' | 'isVerified' | 'createdAt'>) => {
+  const addAgency = async (data: any) => {
     try {
       const token = await getToken();
-      const newAgency = await agencyService.create(data, token || undefined);
+      // Map frontend fields (franchise, logo) to backend fields (isFranchise, logoUrl)
+      const mappedData = {
+        ...data,
+        isFranchise: data.franchise || false,
+        logoUrl: data.logo || null,
+      };
+      const newAgency = await agencyService.create(mappedData, token || undefined);
       setAgencies(prev => [...prev, newAgency]);
       return newAgency;
     } catch (err) {

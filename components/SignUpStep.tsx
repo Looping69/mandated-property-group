@@ -9,17 +9,17 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import { UserRole } from '../types';
+import { UserRole, User } from '../types';
 import { Button } from './ui/button';
 import {
-    CheckCircle, Mail, Lock, User, ArrowRight, Loader2,
+    CheckCircle, Mail, Lock, User as UserIcon, ArrowRight, Loader2,
     AlertCircle, Eye, EyeOff, ArrowLeft
 } from 'lucide-react';
 
 interface SignUpStepProps {
     role: UserRole;
     registrationData: Record<string, unknown>;
-    onSuccess: () => Promise<void> | void;
+    onSuccess: (user: User) => Promise<void> | void;
     onBack: () => void;
 }
 
@@ -57,7 +57,7 @@ export const SignUpStep: React.FC<SignUpStepProps> = ({
             setFirstName(parts[0] || '');
             setLastName(parts.slice(1).join(' ') || '');
         }
-    }, [registrationData]);
+    }, [registrationData, email, firstName, lastName]);
 
     const getRoleLabel = (): string => {
         switch (role) {
@@ -121,7 +121,7 @@ export const SignUpStep: React.FC<SignUpStepProps> = ({
 
         try {
             // Create the account
-            await signUp({
+            const newUser: User = await signUp({
                 email: email.trim().toLowerCase(),
                 password,
                 firstName: firstName.trim(),
@@ -132,7 +132,7 @@ export const SignUpStep: React.FC<SignUpStepProps> = ({
             });
 
             // Call the success handler to save role-specific data
-            await onSuccess();
+            await onSuccess(newUser);
         } catch (err: any) {
             console.error('Signup failed:', err);
 
@@ -152,7 +152,7 @@ export const SignUpStep: React.FC<SignUpStepProps> = ({
             {/* Header */}
             <div className="text-center mb-6">
                 <div className="w-16 h-16 bg-gradient-to-br from-brand-green to-emerald-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-                    <User size={28} className="text-white" />
+                    <UserIcon size={28} className="text-white" />
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900 mb-2">Create Your Account</h3>
                 <p className="text-slate-500">
@@ -173,7 +173,7 @@ export const SignUpStep: React.FC<SignUpStepProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="text-xs font-bold text-slate-500 uppercase mb-2 block flex items-center gap-2">
-                            <User size={14} /> First Name *
+                            <UserIcon size={14} /> First Name *
                         </label>
                         <input
                             type="text"

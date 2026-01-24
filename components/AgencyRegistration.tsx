@@ -13,7 +13,7 @@ import { SignUpStep } from './SignUpStep';
 import { useUser } from '../contexts/AuthContext';
 
 interface AgencyRegistrationProps {
-    onSubmit: (agency: any) => Promise<void>;
+    onSubmit: (agency: any, user?: any) => Promise<void>;
     onCancel?: () => void;
     onDashboardRedirect?: () => void;
 }
@@ -25,20 +25,6 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
 }) => {
     const { isSignedIn } = useUser();
     const [step, setStep] = useState(1);
-
-    useEffect(() => {
-        const autoSubmit = async () => {
-            if (step === 4 && isSignedIn) {
-                try {
-                    await onSubmit(formData);
-                    setStep(5);
-                } catch (e) {
-                    console.error("Auto submit failed", e);
-                }
-            }
-        };
-        autoSubmit();
-    }, [step, isSignedIn]);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [formData, setFormData] = useState({
         name: '',
@@ -54,6 +40,28 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
         teamSize: '',
         franchise: false
     });
+
+    const [wasSignedInOnMount] = useState(isSignedIn);
+    const hasAutoSubmitted = React.useRef(false);
+
+    useEffect(() => {
+        const autoSubmit = async () => {
+            if (step === 4 && isSignedIn && !hasAutoSubmitted.current) {
+                // If they were already signed in, we auto-submit
+                // If they just signed up, the SignUpStep's onSuccess handles it
+                if (wasSignedInOnMount) {
+                    hasAutoSubmitted.current = true;
+                    try {
+                        await onSubmit(formData);
+                        setStep(5);
+                    } catch (e) {
+                        console.error("Auto submit failed", e);
+                    }
+                }
+            }
+        };
+        autoSubmit();
+    }, [step, isSignedIn, wasSignedInOnMount, onSubmit, formData]);
 
     const updateField = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -301,9 +309,9 @@ export const AgencyRegistration: React.FC<AgencyRegistrationProps> = ({
                                         teamSize: formData.teamSize,
                                         franchise: formData.franchise,
                                     }}
-                                    onSuccess={async () => {
+                                    onSuccess={async (newUser) => {
                                         try {
-                                            await onSubmit(formData);
+                                            await onSubmit(formData, newUser);
                                         } catch (error) {
                                             console.error('Failed to save agency data:', error);
                                         }

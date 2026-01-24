@@ -13,7 +13,7 @@ import { SignUpStep } from './SignUpStep';
 import { useUser } from '../contexts/AuthContext';
 
 interface ContractorRegistrationProps {
-    onSubmit: (contractor: any) => Promise<void>;
+    onSubmit: (contractor: any, user?: any) => Promise<void>;
     onCancel?: () => void;
     onDashboardRedirect: () => void;
 }
@@ -99,10 +99,10 @@ export const ContractorRegistration: React.FC<ContractorRegistrationProps> = ({
         isVerified: false
     });
 
-    const handleSignUpSuccess = async () => {
+    const handleSignUpSuccess = async (newUser: any) => {
         setIsSubmitting(true);
         try {
-            await onSubmit(getContractorData());
+            await onSubmit(getContractorData(), newUser);
             setStep(5);
         } catch (error) {
             console.error('Failed to save contractor data:', error);

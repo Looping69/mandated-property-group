@@ -13,7 +13,7 @@ import { SignUpStep } from './SignUpStep';
 import { useUser } from '../contexts/AuthContext';
 
 interface AgentRegistrationProps {
-    onSubmit: (agent: any) => Promise<void>;
+    onSubmit: (agent: any, user?: any) => Promise<void>;
     onCancel?: () => void;
     onDashboardRedirect?: () => void;
 }
@@ -69,7 +69,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
         if (step > 1 && step < 5) setStep((step - 1) as Step);
     };
 
-    const handleSignUpSuccess = async () => {
+    const handleSignUpSuccess = async (newUser: any) => {
         setIsSubmitting(true);
         try {
             await onSubmit({
@@ -85,7 +85,7 @@ export const AgentRegistration: React.FC<AgentRegistrationProps> = ({
                 image: formData.image || 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=400',
                 rating: 4.5,
                 isVerified: false
-            });
+            }, newUser);
             setStep(5);
         } catch (error) {
             console.error('Failed to save agent data:', error);
