@@ -46,8 +46,13 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
     const [newListing, setNewListing] = useState<Partial<Listing>>({
         agentId: currentAgent?.id || '',
         status: 'active',
-        isFeatured: false
+        isFeatured: false,
+        propertyType: 'House',
+        images: []
     });
+
+    const maxPhotos = currentSubscription?.package?.maxPhotos || 5;
+    const remainingPhotos = maxPhotos - (newListing.images?.length || 0);
 
     if (!currentAgent) {
         return (
@@ -78,13 +83,37 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
     };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setNewListing({ ...newListing, image: reader.result as string });
-        };
-        reader.readAsDataURL(file);
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const currentImages = newListing.images || [];
+        if (currentImages.length + files.length > maxPhotos) {
+            showToast(`You can only upload up to ${maxPhotos} photos. You have ${maxPhotos - currentImages.length} slots remaining.`, "error");
+            return;
+        }
+
+        files.forEach(file => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setNewListing(prev => ({
+                    ...prev,
+                    images: [...(prev.images || []), reader.result as string],
+                    // Use the first image as the main featured image if none exists
+                    image: prev.image || (reader.result as string)
+                }));
+            };
+            reader.readAsDataURL(file);
+        });
+    };
+
+    const removeImage = (index: number) => {
+        const updatedImages = [...(newListing.images || [])];
+        updatedImages.splice(index, 1);
+        setNewListing({
+            ...newListing,
+            images: updatedImages,
+            image: index === 0 ? (updatedImages[0] || '') : newListing.image
+        });
     };
 
     const handleGenerateDescription = async () => {
@@ -113,10 +142,15 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
             ...newListing,
             id: `listing-${Date.now()}`,
             agentId: currentAgent.id,
-            images: newListing.image ? [newListing.image] : [],
-            isFeatured: false
+            isFeatured: newListing.isFeatured || false
         });
-        setNewListing({ agentId: currentAgent.id, status: 'active', isFeatured: false });
+        setNewListing({
+            agentId: currentAgent.id,
+            status: 'active',
+            isFeatured: false,
+            propertyType: 'House',
+            images: []
+        });
         setIsCreatingListing(false);
     };
 
@@ -279,18 +313,37 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
                         <form onSubmit={handleSubmitListing} className="space-y-6">
                             {/* Image Upload */}
                             <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase mb-2 block">Property Image</label>
-                                <div className="flex items-center gap-4">
-                                    {newListing.image && (
-                                        <div className="w-32 h-32 rounded-lg overflow-hidden border-2 border-slate-200">
-                                            <img src={newListing.image} alt="Preview" className="w-full h-full object-cover" />
+                                <div className="flex items-center justify-between mb-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase block">Property Photos ({newListing.images?.length || 0}/{maxPhotos})</label>
+                                    <span className="text-[10px] font-bold text-slate-400">
+                                        {remainingPhotos > 0 ? `${remainingPhotos} slots remaining` : 'Limit reached'}
+                                    </span>
+                                </div>
+                                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                    {newListing.images?.map((img, idx) => (
+                                        <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border-2 border-slate-200 group">
+                                            <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => removeImage(idx)}
+                                                className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                            {idx === 0 && (
+                                                <div className="absolute bottom-0 left-0 right-0 bg-brand-green/80 text-white text-[10px] font-bold text-center py-0.5">
+                                                    Main Photo
+                                                </div>
+                                            )}
                                         </div>
+                                    ))}
+                                    {remainingPhotos > 0 && (
+                                        <label className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-brand-green transition-colors">
+                                            <Plus size={24} className="text-slate-400 mb-1" />
+                                            <span className="text-[10px] text-slate-600 font-bold">Add Photo</span>
+                                            <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                                        </label>
                                     )}
-                                    <label className="flex-1 flex flex-col items-center justify-center h-32 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:border-brand-green transition-colors">
-                                        <Upload size={32} className="text-slate-400 mb-2" />
-                                        <span className="text-sm text-slate-600">Click to upload image</span>
-                                        <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-                                    </label>
                                 </div>
                             </div>
 
@@ -387,6 +440,20 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({
                                     >
                                         <option value="appointment">By Appointment</option>
                                         <option value="on_show">On Show</option>
+                                    </select>
+                                </div>
+                                <div className="grid grid-cols-1">
+                                    <label className="text-xs font-bold text-slate-500 uppercase mb-1 block">Property Type</label>
+                                    <select
+                                        value={newListing.propertyType || 'House'}
+                                        onChange={e => setNewListing({ ...newListing, propertyType: e.target.value as any })}
+                                        className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-green"
+                                    >
+                                        <option value="House">House</option>
+                                        <option value="Apartment">Apartment</option>
+                                        <option value="Townhouse">Townhouse</option>
+                                        <option value="Commercial">Commercial</option>
+                                        <option value="Land">Land</option>
                                     </select>
                                 </div>
                                 <div className="flex items-end">

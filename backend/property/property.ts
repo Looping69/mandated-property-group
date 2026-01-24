@@ -96,6 +96,7 @@ export interface Listing {
     isFeatured: boolean;
     status: string;
     isPetFriendly: boolean;
+    propertyType: string;
     viewingType: string;
     onShowDate?: string;
 }
@@ -137,6 +138,7 @@ export interface CreateListingParams {
     isFeatured: boolean;
     status: string;
     isPetFriendly: boolean;
+    propertyType: string;
     viewingType: string;
     onShowDate?: string;
 }
@@ -178,7 +180,7 @@ export const listProperties = api(
     async (): Promise<{ listings: Listing[] }> => {
         const listings: Listing[] = [];
         const rows = db.query`
-            SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", viewing_type as "viewingType", on_show_date as "onShowDate"
+            SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", property_type as "propertyType", viewing_type as "viewingType", on_show_date as "onShowDate"
             FROM listings
         `;
         for await (const row of rows) {
@@ -198,6 +200,7 @@ export const listProperties = api(
                 isFeatured: row.isFeatured,
                 status: row.status,
                 isPetFriendly: row.isPetFriendly,
+                propertyType: row.propertyType || 'House',
                 viewingType: row.viewingType || 'appointment',
                 onShowDate: row.onShowDate,
             });
@@ -216,19 +219,19 @@ export const listMyProperties = api(
         let query;
         if (authData.role === 'ADMIN') {
             query = db.query`
-                SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", viewing_type as "viewingType", on_show_date as "onShowDate"
+                SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", property_type as "propertyType", viewing_type as "viewingType", on_show_date as "onShowDate"
                 FROM listings
             `;
         } else if (authData.role === 'AGENCY' && authData.agencyID) {
             query = db.query`
-                SELECT l.id, l.title, l.price, l.address, l.description, l.beds, l.baths, l.garage, l.pool, l.image_url as image, l.images, l.agent_id as "agentId", l.is_featured as "isFeatured", l.status, l.is_pet_friendly as "isPetFriendly", l.viewing_type as "viewingType", l.on_show_date as "onShowDate"
+                SELECT l.id, l.title, l.price, l.address, l.description, l.beds, l.baths, l.garage, l.pool, l.image_url as image, l.images, l.agent_id as "agentId", l.is_featured as "isFeatured", l.status, l.is_pet_friendly as "isPetFriendly", l.property_type as "propertyType", l.viewing_type as "viewingType", l.on_show_date as "onShowDate"
                 FROM listings l
                 JOIN agents a ON l.agent_id = a.id
                 WHERE a.agency_id = ${authData.agencyID}
             `;
         } else if (authData.role === 'AGENT' && authData.agentID) {
             query = db.query`
-                SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", viewing_type as "viewingType", on_show_date as "onShowDate"
+                SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", property_type as "propertyType", viewing_type as "viewingType", on_show_date as "onShowDate"
                 FROM listings
                 WHERE agent_id = ${authData.agentID}
             `;
@@ -253,6 +256,7 @@ export const listMyProperties = api(
                 isFeatured: row.isFeatured,
                 status: row.status,
                 isPetFriendly: row.isPetFriendly,
+                propertyType: row.propertyType || 'House',
                 viewingType: row.viewingType || 'appointment',
                 onShowDate: row.onShowDate,
             });
@@ -278,7 +282,7 @@ export const getProperty = api(
     { expose: true, method: "GET", path: "/api/properties/:id" },
     async ({ id }: { id: string }): Promise<{ listing?: Listing }> => {
         const rows = db.query`
-            SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", viewing_type as "viewingType", on_show_date as "onShowDate"
+            SELECT id, title, price, address, description, beds, baths, garage, pool, image_url as image, images, agent_id as "agentId", is_featured as "isFeatured", status, is_pet_friendly as "isPetFriendly", property_type as "propertyType", viewing_type as "viewingType", on_show_date as "onShowDate"
             FROM listings
             WHERE id = ${id}
         `;
@@ -300,6 +304,7 @@ export const getProperty = api(
                     isFeatured: row.isFeatured,
                     status: row.status,
                     isPetFriendly: row.isPetFriendly,
+                    propertyType: row.propertyType || 'House',
                     viewingType: row.viewingType || 'appointment',
                     onShowDate: row.onShowDate,
                 }
@@ -326,10 +331,16 @@ export const createProperty = api(
             }
         }
 
+        // Image Limit Check
+        const maxPhotos = await getUserIdMaxPhotos(authData.userID);
+        if (params.images && params.images.length > maxPhotos) {
+            throw APIError.permissionDenied(`image limit exceeded: your current plan allows up to ${maxPhotos} photos`);
+        }
+
         const id = `p_${Math.random().toString(36).substring(2, 11)}${Date.now().toString(36)}`;
         await db.exec`
-            INSERT INTO listings (id, title, price, address, description, beds, baths, garage, pool, image_url, images, agent_id, is_featured, status, is_pet_friendly, viewing_type, on_show_date)
-            VALUES (${id}, ${params.title}, ${params.price}, ${params.address}, ${params.description}, ${params.beds}, ${params.baths}, ${params.garage}, ${params.pool}, ${params.image}, ${params.images}, ${params.agentId}, ${params.isFeatured}, ${params.status}, ${params.isPetFriendly}, ${params.viewingType}, ${params.onShowDate})
+            INSERT INTO listings (id, title, price, address, description, beds, baths, garage, pool, image_url, images, agent_id, is_featured, status, is_pet_friendly, property_type, viewing_type, on_show_date)
+            VALUES (${id}, ${params.title}, ${params.price}, ${params.address}, ${params.description}, ${params.beds}, ${params.baths}, ${params.garage}, ${params.pool}, ${params.image}, ${params.images}, ${params.agentId}, ${params.isFeatured}, ${params.status}, ${params.isPetFriendly}, ${params.propertyType}, ${params.viewingType}, ${params.onShowDate})
         `;
         return {
             id,
@@ -347,6 +358,7 @@ export const createProperty = api(
             isFeatured: params.isFeatured,
             status: params.status,
             isPetFriendly: params.isPetFriendly,
+            propertyType: params.propertyType,
             viewingType: params.viewingType,
             onShowDate: params.onShowDate
         };
@@ -391,6 +403,7 @@ export const updateProperty = api(
                 is_featured = COALESCE(${updates.isFeatured ?? null}, is_featured),
                 status = COALESCE(${updates.status ?? null}, status),
                 is_pet_friendly = COALESCE(${updates.isPetFriendly ?? null}, is_pet_friendly),
+                property_type = COALESCE(${updates.propertyType ?? null}, property_type),
                 viewing_type = COALESCE(${updates.viewingType ?? null}, viewing_type),
                 on_show_date = COALESCE(${updates.onShowDate ?? null}, on_show_date)
             WHERE id = ${id}
@@ -531,3 +544,14 @@ export const updateInquiryStatus = api(
         return { success: true };
     }
 );
+
+async function getUserIdMaxPhotos(userID: string): Promise<number> {
+    const row = await db.queryRow`
+        SELECT p.max_photos as "maxPhotos"
+        FROM subscriptions s
+        JOIN packages p ON s.package_id = p.id
+        WHERE s.user_id = ${userID} AND s.status = 'active'
+        LIMIT 1
+    `;
+    return row?.maxPhotos || 5;
+}

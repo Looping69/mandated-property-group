@@ -131,6 +131,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = await getToken();
       const newListing = await propertyService.create(listing as Listing, token || undefined);
       setListings(prev => [...prev, newListing]);
+      setMyListings(prev => [...prev, newListing]);
     } catch (err) {
       console.error('Failed to create listing:', err);
       throw err;
@@ -142,6 +143,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = await getToken();
       const updated = await propertyService.update(id, updates, token || undefined);
       setListings(prev => prev.map(l => l.id === id ? { ...l, ...updated } : l));
+      setMyListings(prev => prev.map(l => l.id === id ? { ...l, ...updated } : l));
     } catch (err) {
       console.error('Failed to update listing:', err);
       throw err;
@@ -153,6 +155,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const token = await getToken();
       await propertyService.delete(id, token || undefined);
       setListings(prev => prev.filter(l => l.id !== id));
+      setMyListings(prev => prev.filter(l => l.id !== id));
     } catch (err) {
       console.error('Failed to delete listing:', err);
       throw err;

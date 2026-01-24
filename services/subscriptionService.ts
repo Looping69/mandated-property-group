@@ -12,6 +12,7 @@ export interface Package {
     maxListings: number;
     topAgents: number;
     featuredListings: number;
+    maxPhotos: number;
     isActive: boolean;
 }
 

@@ -33,6 +33,7 @@ export const propertyService = {
                 agentId: listing.agentId || 'a1',
                 isFeatured: listing.isFeatured || false,
                 status: listing.status || 'available',
+                propertyType: listing.propertyType || 'House',
                 price: Number(listing.price),
             }),
         });

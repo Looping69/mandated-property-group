@@ -18,6 +18,7 @@ export interface Package {
     maxListings: number;
     topAgents: number;
     featuredListings: number;
+    maxPhotos: number;
     isActive: boolean;
 }
 
@@ -55,6 +56,7 @@ export const listPackages = api(
             SELECT id, name, slug, description, price_cents as "priceCents", 
                    billing_period as "billingPeriod", max_listings as "maxListings",
                    top_agents as "topAgents", featured_listings as "featuredListings",
+                   max_photos as "maxPhotos",
                    is_active as "isActive"
             FROM packages
             WHERE is_active = true
@@ -71,6 +73,7 @@ export const listPackages = api(
                 maxListings: row.maxListings,
                 topAgents: row.topAgents,
                 featuredListings: row.featuredListings,
+                maxPhotos: row.maxPhotos,
                 isActive: row.isActive,
             });
         }
@@ -86,6 +89,7 @@ export const getPackage = api(
             SELECT id, name, slug, description, price_cents as "priceCents", 
                    billing_period as "billingPeriod", max_listings as "maxListings",
                    top_agents as "topAgents", featured_listings as "featuredListings",
+                   max_photos as "maxPhotos",
                    is_active as "isActive"
             FROM packages
             WHERE slug = ${slug}
@@ -102,6 +106,7 @@ export const getPackage = api(
                 maxListings: row.maxListings,
                 topAgents: row.topAgents,
                 featuredListings: row.featuredListings,
+                maxPhotos: row.maxPhotos,
                 isActive: row.isActive,
             }
         };
